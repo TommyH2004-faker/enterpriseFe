@@ -1,0 +1,236 @@
+@use "@coreui/coreui/scss/coreui" as * with ( 
+  $enable-deprecation-messages: false,
+  $primary: #321FDB,
+  $success: #2ED8B6,
+  $warning: #FFC107,
+  $danger: #E55353,
+  $info: #54A3FF,
+  $body-bg: #F8F9FA,
+  $body-color: #4F5D73,
+  $font-family-base: (-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif)
+);
+@use "@coreui/chartjs/scss/coreui-chartjs";
+@use "vendors/simplebar";
+
+/* -------------------------------------------------------------------------- */
+/* Custom Typography */
+/* -------------------------------------------------------------------------- */
+h1, .h1 { font-size: 32px; font-weight: 700; color: #4F5D73; }
+h2, .h2 { font-size: 24px; font-weight: 600; color: #4F5D73; }
+h3, .h3 { font-size: 20px; font-weight: 600; color: #4F5D73; }
+body { font-size: 14px; font-weight: 400; color: #4F5D73; background-color: #F8F9FA; }
+.label, label { font-size: 12px; font-weight: 500; color: #A4B2C6; }
+
+/* -------------------------------------------------------------------------- */
+/* Component Overrides */
+/* -------------------------------------------------------------------------- */
+
+/* Buttons */
+.btn {
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+}
+.btn-sm { padding: 8px 16px; }
+.btn-md { padding: 10px 20px; }
+.btn-lg { padding: 12px 24px; }
+.btn:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+  transform: scale(1.02);
+}
+.btn:active {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transform: scale(0.98);
+}
+
+/* Cards */
+.card {
+  border: 1px solid #E8EAED;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.card-body {
+  padding: 16px 24px;
+}
+
+/* Inputs & Textareas */
+.form-control, .form-select {
+  border: 1px solid #D0D4D9;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--cui-primary);
+  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.25);
+}
+.form-control::placeholder {
+  color: #A4B2C6;
+}
+
+/* Badges */
+.badge {
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Tables */
+.table {
+  --cui-table-bg: transparent;
+  --cui-table-striped-bg: rgba(0,0,0,0.02);
+}
+.table thead th {
+  background-color: #F0F4F8;
+  color: #4F5D73;
+  padding: 12px;
+  border-bottom: 2px solid #E8EAED;
+}
+.table tbody td {
+  padding: 12px;
+  vertical-align: middle;
+}
+.table-hover tbody tr:hover {
+  background-color: #F8F9FA;
+}
+
+/* Layout overrides */
+.wrapper {
+  width: 100%;
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  @include transition(padding .15s);
+}
+
+.header > .container-fluid,
+.sidebar-header {
+  min-height: calc(4rem + 1px);
+}
+
+.sidebar-brand-full {
+  margin-left: 0;
+  max-width: 100%;
+}
+
+.sidebar-header {
+  .nav-underline-border {
+    --cui-nav-underline-border-link-padding-x: 1rem;
+    --cui-nav-underline-border-gap: 0;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: calc(4rem + 1px);
+  }
+}
+
+.sidebar-toggler {
+  margin-inline-start: auto;
+}
+
+.sidebar-narrow,
+.sidebar-narrow-unfoldable:not(:hover) {
+  .sidebar-toggler {
+    margin-inline-end: auto;
+  }
+}
+
+.header > .container-fluid + .container-fluid {
+  min-height: 3rem;
+}
+
+.footer {
+  min-height: calc(3rem + 1px);
+}
+
+/* Dark Mode Overrides */
+@include color-mode(dark) {
+  body {
+    background-color: var(--cui-dark-bg-subtle);
+    color: #E8EAED;
+  }
+  h1, .h1, h2, .h2, h3, .h3 {
+    color: #E8EAED;
+  }
+  
+  .card {
+    background-color: #2C2C34;
+    border-color: #3A3F47;
+  }
+
+  .footer {
+    --cui-footer-bg: var(--cui-body-bg);
+  }
+  
+  .table thead th {
+    background-color: #24242A;
+    color: #E8EAED;
+    border-color: #3A3F47;
+  }
+}
+
+/* Utilities */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Shadow utilities (ARCHITECTURE.md) */
+/* -------------------------------------------------------------------------- */
+.shadow-subtle { box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important; }
+.shadow-medium { box-shadow: 0 4px 8px rgba(0,0,0,0.12) !important; }
+.shadow-large  { box-shadow: 0 8px 16px rgba(0,0,0,0.16) !important; }
+
+/* -------------------------------------------------------------------------- */
+/* Transitions (ARCHITECTURE.md) */
+/* -------------------------------------------------------------------------- */
+.transition-all { transition: all 0.2s ease-in-out !important; }
+
+/* -------------------------------------------------------------------------- */
+/* Auth Pages */
+/* -------------------------------------------------------------------------- */
+/* Ensure auth pages don't inherit sidebar padding */
+.login-page, .register-page, .forgot-page {
+  min-height: 100vh;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Kanban card drag/drop states (ARCHITECTURE.md) */
+/* -------------------------------------------------------------------------- */
+.kanban-card {
+  cursor: grab;
+  transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+  &:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
+  }
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Table utilities */
+/* -------------------------------------------------------------------------- */
+.table-row-actions {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+tr:hover .table-row-actions {
+  opacity: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Form password strength */
+/* -------------------------------------------------------------------------- */
+.password-strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Step indicator animation */
+/* -------------------------------------------------------------------------- */
+.step-indicator-circle {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
