@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="pb-2">
       <div className="d-flex flex-column mb-4">
-        <h1 className="h3 fw-bold mb-1 text-dark">Dashboard</h1>
+        <h1 className="h3 fw-bold mb-1 text-light">Dashboard</h1>
         <div className="text-muted">Xin chào, Nguyễn Văn A</div>
       </div>
 
@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
                     {stat.trend}
                   </CBadge>
                 </div>
-                <div className="fw-bold text-dark" style={{ fontSize: '28px' }}>{stat.value}</div>
+                <div className="fw-bold text-light" style={{ fontSize: '28px' }}>{stat.value}</div>
                 <div className="text-uppercase text-muted small fw-semibold" style={{ letterSpacing: '0.03em' }}>{stat.title}</div>
               </CCardBody>
             </CCard>
@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
         <CCol lg={6}>
           <CCard className="h-100 shadow-sm border-0">
             <CCardHeader className="bg-white border-bottom-0 pt-4 px-4 pb-0">
-              <div className="fw-bold text-dark">Công việc theo trạng thái</div>
+              <div className="fw-bold text-light">Công việc theo trạng thái</div>
             </CCardHeader>
             <CCardBody className="p-4">
               <CChartDoughnut
@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
         <CCol lg={6}>
           <CCard className="h-100 shadow-sm border-0">
             <CCardHeader className="bg-white border-bottom-0 pt-4 px-4 pb-0">
-              <div className="fw-bold text-dark">Ưu tiên công việc</div>
+              <div className="fw-bold text-light">Ưu tiên công việc</div>
             </CCardHeader>
             <CCardBody className="p-4">
               <CChartPie
@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
         <CCol xs={12}>
           <CCard className="shadow-sm border-0">
             <CCardHeader className="bg-white border-bottom-0 pt-4 px-4 pb-0">
-              <div className="fw-bold text-dark">Tiến độ dự án - 4 tuần gần đây</div>
+              <div className="fw-bold text-light">Tiến độ dự án - 4 tuần gần đây</div>
             </CCardHeader>
             <CCardBody className="p-4">
               <CChart
@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
         <CCol lg={6}>
           <CCard className="h-100 shadow-sm border-0">
             <CCardHeader className="bg-white border-bottom-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
-              <div className="fw-bold text-dark">Hoạt động gần đây</div>
+              <div className="fw-bold text-light">Hoạt động gần đây</div>
               <a href="#" className="text-decoration-none small fw-semibold">Xem tất cả</a>
             </CCardHeader>
             <CCardBody className="p-4">
@@ -124,7 +124,7 @@ const Dashboard: React.FC = () => {
                         {activity.name.charAt(0)}
                       </div>
                       <div>
-                        <div className="text-dark"><span className="fw-bold">{activity.name}</span> {activity.action}</div>
+                        <div className="text-light"><span className="fw-bold">{activity.name}</span> {activity.action}</div>
                         <div className="text-muted small mt-1">{formatDistanceToNow(activity.time, { addSuffix: true, locale: vi })}</div>
                       </div>
                     </div>

@@ -1,28 +1,41 @@
 import React from 'react'
-import {
-  Navigate,
-  Outlet,
-  useLocation,
-} from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 
-import { authStorage } from '../services/authStorage'
+import { authStorage } from 'src/services/authStorage'
 
-const ProtectedRoute: React.FC = () => {
+interface ProtectedRouteProps {
+  children: React.ReactNode
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+}) => {
   const location = useLocation()
 
-  if (!authStorage.isAuthenticated()) {
+  const isAuthenticated =
+    authStorage.isAuthenticated()
+
+  if (!isAuthenticated) {
     return (
       <Navigate
         to="/login"
         replace
         state={{
-          from: location,
+          from: location.pathname,
         }}
       />
     )
   }
 
-  return <Outlet />
+  if (authStorage.mustChangePassword() && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />
+  }
+
+  if (!authStorage.mustChangePassword() && location.pathname === '/change-password') {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
 }
 
 export default ProtectedRoute

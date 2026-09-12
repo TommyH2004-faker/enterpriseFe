@@ -14,19 +14,25 @@ import {
   CCard,
   CCardBody,
 } from '@coreui/react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
+import toast from 'react-hot-toast'
+import { authApi, getErrorMessage, getHttpErrorMessage } from '../../../api/authApi'
 
 type Step = 1 | 2 | 3
 
 interface FormData {
-  fullName: string
+  username: string
   email: string
-  department: string
-  position: string
-  phone: string
+  firstName: string
+  lastName: string
+  gender: string
   password: string
   confirmPassword: string
   agreed: boolean
 }
+
+type FormErrors = Partial<Record<keyof FormData, string>>
 
 const getPasswordStrength = (pw: string): { label: string; score: number; color: string } => {
   let score = 0
@@ -47,11 +53,11 @@ const Register: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [errors, setErrors] = useState<Partial<FormData>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState<FormData>({
-    fullName: '', email: '', department: '', position: '', phone: '',
+    username: '', email: '', firstName: '', lastName: '', gender: '',
     password: '', confirmPassword: '', agreed: false,
   })
 
@@ -61,17 +67,18 @@ const Register: React.FC = () => {
   }
 
   const validateStep1 = () => {
-    const errs: Partial<FormData> = {}
-    if (!formData.fullName.trim()) errs.fullName = 'Họ tên không được để trống'
+    const errs: FormErrors = {}
+    if (!formData.username.trim()) errs.username = 'Tên đăng nhập không được để trống'
     if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errs.email = 'Email không hợp lệ'
-    if (!formData.department) errs.department = 'Vui lòng chọn phòng ban'
-    if (!formData.position.trim()) errs.position = 'Chức vụ không được để trống'
+    if (!formData.firstName.trim()) errs.firstName = 'Tên không được để trống'
+    if (!formData.lastName.trim()) errs.lastName = 'Họ không được để trống'
+    if (!formData.gender) errs.gender = 'Vui lòng chọn giới tính'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
   const validateStep2 = () => {
-    const errs: Partial<FormData> = {}
+    const errs: FormErrors = {}
     if (formData.password.length < 8) errs.password = 'Mật khẩu phải có ít nhất 8 ký tự'
     if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Mật khẩu xác nhận không khớp'
     if (!formData.agreed) errs.agreed = 'Vui lòng đồng ý với điều khoản'
@@ -83,13 +90,29 @@ const Register: React.FC = () => {
     if (step === 1 && validateStep1()) setStep(2)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep2()) return
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const result = await authApi.register({
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        gender: Number(formData.gender),
+      })
+      if (!result.isSuccess) {
+        toast.error(getErrorMessage(result.errors, result.message || 'Đăng ký thất bại'))
+        return
+      }
+      toast.success('Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.')
       setStep(3)
-    }, 1500)
+    } catch (error: any) {
+      toast.error(getHttpErrorMessage(error, 'Không thể kết nối đến máy chủ'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const strength = getPasswordStrength(formData.password)
@@ -139,14 +162,14 @@ const Register: React.FC = () => {
                 <CForm>
                   <CRow className="g-3">
                     <CCol xs={12}>
-                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Họ và tên <span className="text-danger">*</span></label>
+                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Tên đăng nhập <span className="text-danger">*</span></label>
                       <CFormInput
-                        placeholder="Nguyễn Văn A"
-                        value={formData.fullName}
-                        onChange={e => update('fullName', e.target.value)}
-                        invalid={!!errors.fullName}
+                        placeholder="nguyen.van.a"
+                        value={formData.username}
+                        onChange={e => update('username', e.target.value)}
+                        invalid={!!errors.username}
                       />
-                      {errors.fullName && <div className="text-danger small mt-1">{errors.fullName}</div>}
+                      {errors.username && <div className="text-danger small mt-1">{errors.username}</div>}
                     </CCol>
                     <CCol xs={12}>
                       <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Email <span className="text-danger">*</span></label>
@@ -160,38 +183,34 @@ const Register: React.FC = () => {
                       {errors.email && <div className="text-danger small mt-1">{errors.email}</div>}
                     </CCol>
                     <CCol xs={12} sm={6}>
-                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Phòng ban <span className="text-danger">*</span></label>
-                      <CFormSelect
-                        value={formData.department}
-                        onChange={e => update('department', e.target.value)}
-                        invalid={!!errors.department}
-                      >
-                        <option value="">Chọn phòng ban</option>
-                        <option>Kỹ thuật</option>
-                        <option>Thiết kế</option>
-                        <option>Nhân sự</option>
-                        <option>Tài chính</option>
-                      </CFormSelect>
-                      {errors.department && <div className="text-danger small mt-1">{errors.department}</div>}
+                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Họ <span className="text-danger">*</span></label>
+                      <CFormInput
+                        placeholder="Nguyễn"
+                        value={formData.lastName}
+                        onChange={e => update('lastName', e.target.value)}
+                        invalid={!!errors.lastName}
+                      />
+                      {errors.lastName && <div className="text-danger small mt-1">{errors.lastName}</div>}
                     </CCol>
                     <CCol xs={12} sm={6}>
-                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Chức vụ <span className="text-danger">*</span></label>
+                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Tên <span className="text-danger">*</span></label>
                       <CFormInput
-                        placeholder="Vd: Lập trình viên"
-                        value={formData.position}
-                        onChange={e => update('position', e.target.value)}
-                        invalid={!!errors.position}
+                        placeholder="Văn A"
+                        value={formData.firstName}
+                        onChange={e => update('firstName', e.target.value)}
+                        invalid={!!errors.firstName}
                       />
-                      {errors.position && <div className="text-danger small mt-1">{errors.position}</div>}
+                      {errors.firstName && <div className="text-danger small mt-1">{errors.firstName}</div>}
                     </CCol>
                     <CCol xs={12}>
-                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Điện thoại <span className="text-muted">(Tùy chọn)</span></label>
-                      <CFormInput
-                        type="tel"
-                        placeholder="0912 345 678"
-                        value={formData.phone}
-                        onChange={e => update('phone', e.target.value)}
-                      />
+                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '13px' }}>Giới tính <span className="text-danger">*</span></label>
+                      <CFormSelect value={formData.gender} onChange={e => update('gender', e.target.value)} invalid={!!errors.gender}>
+                        <option value="">Chọn giới tính</option>
+                        <option value="0">Nam</option>
+                        <option value="1">Nữ</option>
+                        <option value="2">Khác</option>
+                      </CFormSelect>
+                      {errors.gender && <div className="text-danger small mt-1">{errors.gender}</div>}
                     </CCol>
                   </CRow>
 
@@ -223,8 +242,13 @@ const Register: React.FC = () => {
                       />
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
                         className="position-absolute border-0 bg-transparent text-muted"
-                        style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}>
-                        {showPassword ? '🙈' : '👁️'}
+                        style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+                        title={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                        aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}>
+                        <FontAwesomeIcon
+                          icon={showPassword ? faEye : faEyeSlash}
+                          style={{ width: '18px', height: '18px' }}
+                        />
                       </button>
                     </div>
                     {errors.password && <div className="text-danger small mt-1">{errors.password}</div>}
@@ -259,8 +283,13 @@ const Register: React.FC = () => {
                       />
                       <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                         className="position-absolute border-0 bg-transparent text-muted"
-                        style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}>
-                        {showConfirm ? '🙈' : '👁️'}
+                        style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+                        title={showConfirm ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                        aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}>
+                        <FontAwesomeIcon
+                          icon={showConfirm ? faEye : faEyeSlash}
+                          style={{ width: '18px', height: '18px' }}
+                        />
                       </button>
                     </div>
                     {errors.confirmPassword && <div className="text-danger small mt-1">{errors.confirmPassword}</div>}
@@ -299,8 +328,8 @@ const Register: React.FC = () => {
                   </div>
                   <h4 className="fw-bold text-dark mb-2">Tài khoản đã tạo thành công!</h4>
                   <p className="text-muted mb-4">
-                    Chào mừng <strong>{formData.fullName}</strong> đến với TaskFlow.<br />
-                    Tài khoản của bạn đang chờ được Admin phê duyệt.
+                    Chào mừng <strong>{formData.lastName} {formData.firstName}</strong> đến với TaskFlow.<br />
+                    Vui lòng kiểm tra email để xác thực tài khoản.
                   </p>
                   <CButton color="primary" className="w-100 fw-semibold" style={{ padding: '12px', borderRadius: '6px' }} onClick={() => navigate('/login')}>
                     Đến trang Đăng nhập

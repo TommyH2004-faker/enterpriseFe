@@ -16,13 +16,15 @@ import {
   CTableHeaderCell,
   CTableBody,
   CTableDataCell,
-  CAlert,
   CNav,
   CNavItem,
   CNavLink,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 import { cilLockLocked, cilUser, cilBell, cilMonitor, cilHistory, cilShieldAlt } from '@coreui/icons'
+import toast from 'react-hot-toast'
 
 interface LoginEntry {
   id: number
@@ -42,14 +44,12 @@ const mockLoginHistory: LoginEntry[] = [
 ]
 
 const Settings: React.FC = () => {
-  const [passwordSaved, setPasswordSaved] = useState(false)
   const [showCurrentPw, setShowCurrentPw] = useState(false)
   const [showNewPw, setShowNewPw] = useState(false)
   const [showConfirmPw, setShowConfirmPw] = useState(false)
 
   const handleSavePassword = () => {
-    setPasswordSaved(true)
-    setTimeout(() => setPasswordSaved(false), 3000)
+    toast.success('Mật khẩu đã được cập nhật thành công!')
   }
 
   return (
@@ -129,11 +129,6 @@ const Settings: React.FC = () => {
               </h5>
             </CCardHeader>
             <CCardBody className="p-4">
-              {passwordSaved && (
-                <CAlert color="success" className="mb-3 py-2 px-3" style={{ fontSize: '13px' }}>
-                  ✅ Mật khẩu đã được cập nhật thành công!
-                </CAlert>
-              )}
               <CForm>
                 <div className="mb-3">
                   <CFormLabel className="fw-semibold text-dark" style={{ fontSize: '13px' }}>
@@ -142,7 +137,10 @@ const Settings: React.FC = () => {
                   <div className="position-relative">
                     <CFormInput type={showCurrentPw ? 'text' : 'password'} placeholder="Nhập mật khẩu hiện tại" style={{ paddingRight: '40px' }} />
                     <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="position-absolute border-0 bg-transparent text-muted" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}>
-                      {showCurrentPw ? '🙈' : '👁️'}
+                      <FontAwesomeIcon
+                        icon={showCurrentPw ? faEye : faEyeSlash}
+                        style={{ width: '18px', height: '18px' }}
+                      />
                     </button>
                   </div>
                   <div className="text-muted mt-1" style={{ fontSize: '11px' }}>Nhập mật khẩu hiện tại để xác nhận danh tính</div>
@@ -154,7 +152,10 @@ const Settings: React.FC = () => {
                   <div className="position-relative">
                     <CFormInput type={showNewPw ? 'text' : 'password'} placeholder="Tối thiểu 8 ký tự" style={{ paddingRight: '40px' }} autoComplete="new-password" />
                     <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="position-absolute border-0 bg-transparent text-muted" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}>
-                      {showNewPw ? '🙈' : '👁️'}
+                      <FontAwesomeIcon
+                        icon={showNewPw ? faEye : faEyeSlash}
+                        style={{ width: '18px', height: '18px' }}
+                      />
                     </button>
                   </div>
                 </div>
@@ -165,7 +166,10 @@ const Settings: React.FC = () => {
                   <div className="position-relative">
                     <CFormInput type={showConfirmPw ? 'text' : 'password'} placeholder="Nhập lại mật khẩu mới" style={{ paddingRight: '40px' }} autoComplete="new-password" />
                     <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="position-absolute border-0 bg-transparent text-muted" style={{ right: '10px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}>
-                      {showConfirmPw ? '🙈' : '👁️'}
+                      <FontAwesomeIcon
+                        icon={showConfirmPw ? faEye : faEyeSlash}
+                        style={{ width: '18px', height: '18px' }}
+                      />
                     </button>
                   </div>
                 </div>
@@ -204,7 +208,7 @@ const Settings: React.FC = () => {
                       <div className="fw-medium text-dark" style={{ fontSize: '14px' }}>{item.label}</div>
                       <div className="text-muted" style={{ fontSize: '12px' }}>{item.desc}</div>
                     </div>
-                    <CFormCheck type="switch" id={item.id} defaultChecked={item.defaultChecked} />
+                    <CFormCheck type="checkbox" className="form-switch" id={item.id} defaultChecked={item.defaultChecked} />
                   </div>
                 ))}
                 <CButton color="primary" variant="outline" size="sm" className="fw-medium mt-1">Lưu tùy chọn</CButton>

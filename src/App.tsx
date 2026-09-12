@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect } from 'react'
+import { Toaster } from 'react-hot-toast'
 import {
   BrowserRouter,
   Navigate,
@@ -15,6 +16,9 @@ import {
 import './scss/style.scss'
 
 import DefaultLayout from './layout/DefaultLayout'
+import ProtectedRoute from './routes/ProtectedRoute'
+
+
 
 const Login = React.lazy(
   () => import('./views/pages/login/Login'),
@@ -31,8 +35,20 @@ const ForgotPassword = React.lazy(
     ),
 )
 
+const VerifyEmail = React.lazy(
+  () => import('./views/pages/verify-email/VerifyEmail'),
+)
+
+const ChangePassword = React.lazy(
+  () => import('./views/pages/change-password/ChangePassword'),
+)
+
 const Page404 = React.lazy(
   () => import('./views/pages/page404/Page404'),
+)
+
+const Page403 = React.lazy(
+  () => import('./views/pages/page403/Page403'),
 )
 
 const Page500 = React.lazy(
@@ -56,10 +72,9 @@ const App = () => {
   )
 
   useEffect(() => {
-    const urlParams =
-      new URLSearchParams(
-        window.location.href.split('?')[1],
-      )
+    const urlParams = new URLSearchParams(
+      window.location.href.split('?')[1],
+    )
 
     const theme =
       urlParams.get('theme') &&
@@ -80,6 +95,33 @@ const App = () => {
 
   return (
     <BrowserRouter>
+    <Toaster
+      position="bottom-center"
+      containerStyle={{
+        bottom: '32px',
+        left: '50%',
+        right: 'auto',
+        width: 'calc(100vw - 32px)',
+        maxWidth: '520px',
+        transform: 'translateX(-50%)',
+      }}
+      toastOptions={{
+        duration: 3000,
+        style: {
+          width: '100%',
+          maxWidth: '520px',
+          boxSizing: 'border-box',
+          padding: '16px 20px',
+          fontSize: '17px',
+          fontWeight: 500,
+          lineHeight: 1.5,
+          justifyContent: 'center',
+          textAlign: 'center',
+          borderRadius: '10px',
+        },
+      }}
+    />
+
       <Suspense
         fallback={
           <div className="pt-3 text-center">
@@ -91,9 +133,8 @@ const App = () => {
         }
       >
         <Routes>
-
           {/* ========================================
-              TRANG MẶC ĐỊNH
+              AUTHENTICATION
               ======================================== */}
 
           <Route
@@ -105,11 +146,6 @@ const App = () => {
               />
             }
           />
-
-          {/* ========================================
-              AUTHENTICATION
-              Không dùng DefaultLayout
-              ======================================== */}
 
           <Route
             path="/login"
@@ -125,6 +161,24 @@ const App = () => {
             path="/forgot-password"
             element={<ForgotPassword />}
           />
+        
+          <Route
+            path="/verify-email"
+            element={<VerifyEmail />}
+          />
+          <Route
+            path="/auth/verify-email"
+            element={<VerifyEmail />}
+          />
+
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ========================================
               ERROR PAGES
@@ -136,21 +190,28 @@ const App = () => {
           />
 
           <Route
+            path="/403"
+            element={<Page403 />}
+          />
+
+          <Route
             path="/500"
             element={<Page500 />}
           />
 
           {/* ========================================
               APPLICATION
-              Tất cả route phía trong sẽ dùng
-              DefaultLayout
+              DefaultLayout xử lý tất cả route app
               ======================================== */}
 
           <Route
             path="/*"
-            element={<DefaultLayout />}
+            element={
+              <ProtectedRoute>
+                <DefaultLayout />
+              </ProtectedRoute>
+            }
           />
-
         </Routes>
       </Suspense>
     </BrowserRouter>

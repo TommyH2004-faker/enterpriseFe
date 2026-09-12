@@ -1,0 +1,47 @@
+export const POSITION_MESSAGES = {
+  ERROR_CODE_REQUIRED: 'Vui lòng nhập mã chức vụ.',
+  ERROR_NAME_REQUIRED: 'Vui lòng nhập tên chức vụ.',
+  TITLE_CREATE: 'Thêm chức vụ',
+  TITLE_EDIT: 'Chỉnh sửa chức vụ',
+  BUTTON_CREATE: 'Thêm chức vụ',
+  BUTTON_EDIT: 'Lưu thay đổi',
+  BUTTON_SAVE: 'Đang lưu...',
+  PLACEHOLDER_CODE: 'VD: DEV, MANAGER',
+  PLACEHOLDER_NAME: 'Nhập tên chức vụ',
+  PLACEHOLDER_DESC: 'Nhập mô tả chức vụ',
+  SEARCH_PLACEHOLDER: 'Tìm kiếm mã, tên hoặc mô tả...',
+  NO_DESCRIPTION: 'Chưa có mô tả',
+  PAGE_TITLE: 'Chức vụ',
+  PAGE_DESC: 'Quản lý chức vụ và cấp bậc của nhân viên',
+  STAT_TOTAL: 'Tổng chức vụ',
+  STAT_ACTIVE: 'Đang hoạt động',
+  STAT_INACTIVE: 'Không hoạt động',
+  STAT_EMPLOYEES: 'Nhân viên',
+  STATUS_ACTIVE: 'Đang hoạt động',
+  STATUS_INACTIVE: 'Không hoạt động',
+  STATUS_ALL: 'Trạng thái: Tất cả',
+  EMPTY_STATE: 'Không tìm thấy chức vụ',
+  EMPTY_DESC: 'Không có dữ liệu phù hợp với điều kiện tìm kiếm.',
+  LOADING: 'Đang tải dữ liệu...',
+  DELETE_CONFIRM: 'Bạn có chắc chắn muốn xóa chức vụ',
+  DELETE_WARNING: 'Chức vụ này đang được sử dụng bởi',
+  DELETE_WARNING_EMPLOYEES: 'nhân viên.',
+  SHOWING_RESULTS: 'Hiển thị',
+  OF: '/',
+  POSITIONS: 'chức vụ',
+  CANCEL: 'Hủy',
+  BUTTON_DELETE: 'Xóa chức vụ',
+  CONFIRM_DELETE: 'Xác nhận xóa',
+} as const
+
+export const FORM_LABELS = {
+  CODE: 'Mã chức vụ',
+  NAME: 'Tên chức vụ',
+  DESCRIPTION: 'Mô tả',
+  STATUS: 'Trạng thái',
+} as const
+
+export const FORM_ACTIONS = {
+  EDIT: 'Chỉnh sửa',
+  DELETE: 'Xóa',
+} as const

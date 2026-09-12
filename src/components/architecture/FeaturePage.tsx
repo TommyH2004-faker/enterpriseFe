@@ -50,13 +50,13 @@ const FeaturePage: React.FC<FeaturePageProps> = ({ title, subtitle, actions = []
     <div className="py-2">
       <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
-          <h1 className="h3 fw-bold mb-1 text-dark">{title}</h1>
+          <h1 className="h3 fw-bold mb-1 text-light">{title}</h1>
           <div className="text-muted">{subtitle}</div>
         </div>
         {actions.length > 0 && (
           <div className="d-flex flex-wrap gap-2">
             {actions.map((action, index) => (
-              <CButton key={action} color={index === 0 ? 'primary' : 'secondary'} variant={index === 0 ? 'solid' : 'outline'} size="sm">
+              <CButton key={action} color={index === 0 ? 'primary' : 'secondary'} variant={index === 0 ? 'outline' : 'outline'} size="sm">
                 {action}
               </CButton>
             ))}
@@ -91,7 +91,7 @@ const FeaturePage: React.FC<FeaturePageProps> = ({ title, subtitle, actions = []
             <CCol xs={12} lg={6} key={section.title}>
               <CCard className="h-100 shadow-sm border-0">
                 <CCardHeader className="bg-white border-bottom-0 pt-4 px-4 pb-0">
-                  <div className="fw-bold text-dark">{section.title}</div>
+                  <div className="fw-bold text-light">{section.title}</div>
                   {section.subtitle && <div className="text-muted small mt-1">{section.subtitle}</div>}
                 </CCardHeader>
                 <CCardBody className="p-4">
@@ -99,11 +99,11 @@ const FeaturePage: React.FC<FeaturePageProps> = ({ title, subtitle, actions = []
                     {section.items.map((item) => (
                       <div key={item.label} className="d-flex justify-content-between align-items-start gap-3 pb-3 border-bottom">
                         <div>
-                          <div className="fw-semibold text-dark">{item.label}</div>
+                          <div className="fw-semibold text-light">{item.label}</div>
                           {item.meta && <div className="text-muted small">{item.meta}</div>}
                         </div>
                         <div className="text-end">
-                          <div className="fw-semibold text-dark">{item.value}</div>
+                          <div className="fw-semibold text-light">{item.value}</div>
                           {item.badge && <CBadge color={item.badgeColor ?? 'secondary'} shape="rounded-pill">{item.badge}</CBadge>}
                         </div>
                       </div>

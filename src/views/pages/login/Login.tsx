@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
-  CAlert,
   CButton,
+  CAlert,
   CCard,
   CCardBody,
   CForm,
@@ -15,20 +15,23 @@ import {
 } from '@coreui/react'
 
 import CIcon from '@coreui/icons-react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 
 import {
   cilLockLocked,
   cilUser,
-  cilLowVision,
-  cilWarning,
   cilViewColumn,
 } from '@coreui/icons'
 
-import { authApi } from 'src/api/authApi'
+import { authApi, getErrorMessage, getHttpErrorMessage } from 'src/api/authApi'
 import { authStorage } from 'src/services/authStorage'
+import toast from 'react-hot-toast'
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const activationStatus = searchParams.get('activated')
 
   // ============================================================
   // FORM STATE
@@ -45,7 +48,6 @@ const Login: React.FC = () => {
   // ============================================================
 
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
 
   const [usernameError, setUsernameError] = useState('')
   const [passwordError, setPasswordError] = useState('')
@@ -87,7 +89,6 @@ const Login: React.FC = () => {
 
     setUsernameError(usernameValidation)
     setPasswordError(passwordValidation)
-    setError('')
 
     // Stop submit nếu validation fail
     if (
@@ -110,11 +111,7 @@ const Login: React.FC = () => {
       // ========================================================
 
       if (!result.isSuccess || !result.data) {
-        setError(
-          result.errors?.[0] ||
-            result.message ||
-            'Đăng nhập thất bại.',
-        )
+        toast.error(getErrorMessage(result.errors, result.message || 'Đăng nhập thất bại.'))
 
         return
       }
@@ -129,11 +126,11 @@ const Login: React.FC = () => {
         result.data.antiCsrfToken,
         result.data.roles,
         result.data.permissions,
+        result.data.mustChangePassword,
         remember,
       )
 
-      // Chuyển sang Dashboard sau khi login thành công
-      navigate('/dashboard', {
+      navigate(result.data.mustChangePassword ? '/change-password' : '/dashboard', {
         replace: true,
       })
     } catch (err: any) {
@@ -144,7 +141,7 @@ const Login: React.FC = () => {
         err.response?.data?.errors?.[0] ||
         'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'
 
-      setError(message)
+      toast.error(getHttpErrorMessage(err, message))
     } finally {
       setLoading(false)
     }
@@ -186,7 +183,7 @@ const Login: React.FC = () => {
               style={{
                 width: '40px',
                 height: '40px',
-                color: 'white',
+                color: '#e21313',
               }}
             />
           </div>
@@ -265,7 +262,7 @@ const Login: React.FC = () => {
             className="d-flex align-items-start p-3 rounded-3 text-start"
             style={{
               background:
-                'rgba(255,255,255,0.12)',
+                'rgba(240, 236, 236, 0.12)',
             }}
           >
             <span className="me-3 fs-4">
@@ -314,20 +311,28 @@ const Login: React.FC = () => {
               </p>
             </div>
 
-            {/* Error */}
-            {error && (
-              <CAlert
-                color="danger"
-                className="mb-4 d-flex align-items-center"
-              >
-                <CIcon
-                  icon={cilWarning}
-                  className="me-2"
-                />
-
-                <span>{error}</span>
+            {activationStatus === 'success' && (
+              <CAlert color="success" className="mb-4" role="alert">
+                <div className="fw-semibold">
+                  Kích hoạt tài khoản thành công
+                </div>
+                <div>
+                  Vui lòng đăng nhập để tiếp tục.
+                </div>
               </CAlert>
             )}
+
+            {activationStatus === 'error' && (
+              <CAlert color="danger" className="mb-4" role="alert">
+                <div className="fw-semibold">
+                  Kích hoạt thất bại
+                </div>
+                <div>
+                  Vui lòng kiểm tra lại liên kết hoặc thử lại sau.
+                </div>
+              </CAlert>
+            )}
+
 
             <CForm
               onSubmit={handleSubmit}
@@ -364,7 +369,6 @@ const Login: React.FC = () => {
                       )
 
                       setUsernameError('')
-                      setError('')
                     }}
                     onBlur={() =>
                       setUsernameError(
@@ -433,7 +437,6 @@ const Login: React.FC = () => {
                       )
 
                       setPasswordError('')
-                      setError('')
                     }}
                     onBlur={() =>
                       setPasswordError(
@@ -448,7 +451,7 @@ const Login: React.FC = () => {
                   {/* SHOW / HIDE PASSWORD */}
                   <CButton
                     type="button"
-                    color="light"
+                    color="dark"
                     variant="outline"
                     onClick={() =>
                       setShowPassword((previous) => !previous)
@@ -465,7 +468,10 @@ const Login: React.FC = () => {
                         : 'Hiển thị mật khẩu'
                     }
                   >
-                    <CIcon icon={cilLowVision} />
+                    <FontAwesomeIcon
+                      icon={showPassword ? faEye : faEyeSlash}
+                      style={{ width: '18px', height: '18px' }}
+                    />
                   </CButton>
                 </CInputGroup>
 

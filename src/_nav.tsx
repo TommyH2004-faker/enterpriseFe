@@ -52,11 +52,18 @@ const _nav = [
     to: '/tasks',
     icon: <CIcon icon={cilTask} customClassName="nav-icon" />,
   },
+  // Position By Department
   {
     component: CNavItem,
-    name: 'Kanban',
-    to: '/kanban',
-    icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+    name: 'Vai trò người dùng',
+    to: '/userroles',
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name:'Role User',
+    to: '/roles',
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,
