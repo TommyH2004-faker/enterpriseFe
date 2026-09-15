@@ -13,8 +13,8 @@ import {
   CSpinner,
 } from '@coreui/react'
 import { Position } from 'src/types/position'
-import { PositionFormState } from './hooks/usePositionForm'
-import { FORM_LABELS, POSITION_MESSAGES } from './contants/positionConstants'
+import { PositionFormState } from '../hooks/usePositionForm'
+import { FORM_LABELS, POSITION_MESSAGES } from '../contants/positionConstants'
 
 
 interface PositionFormModalProps {

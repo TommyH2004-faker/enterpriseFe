@@ -10,7 +10,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilSearch } from '@coreui/icons'
-import { POSITION_MESSAGES } from './contants/positionConstants'
+import { POSITION_MESSAGES } from '../contants/positionConstants'
 
 
 interface PositionTableHeaderProps {

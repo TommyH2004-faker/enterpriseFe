@@ -11,7 +11,7 @@ import {
 } from '@coreui/react'
 import { cilTrash } from '@coreui/icons'
 import { Position } from 'src/types/position'
-import { POSITION_MESSAGES } from './contants/positionConstants'
+import { POSITION_MESSAGES } from '../contants/positionConstants'
 import CIcon from '@coreui/icons-react'
 
 

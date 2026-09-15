@@ -24,9 +24,24 @@ class PositionService {
 
 
   // Tạo position mới
-  async create(position: CreatePositionDTO): Promise<Position> {
-   const response = await axiosClient.post<SinglePositionResponse>(`${API_BASE_URL}/api/v1/positions`, position);
-    return response.data.data;
+  // async create(position: CreatePositionDTO): Promise<Position> {
+  //  const response = await axiosClient.post<SinglePositionResponse>(`${API_BASE_URL}/api/v1/positions`, position);
+  //   return response.data.data;
+  // }
+   async create(position: CreatePositionDTO): Promise<string> {
+    const response = await axiosClient.post<{
+      isSuccess: boolean
+      statusCode: number
+      message: string
+      traceId: string
+      data: string
+      errors: string[]
+    }>(
+      `${API_BASE_URL}/api/v1/positions`,
+      position,
+    )
+
+    return response.data.data
   }
 
   // Cập nhật position

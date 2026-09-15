@@ -12,8 +12,8 @@ import {
   cilPeople,
   cilXCircle,
 } from '@coreui/icons'
-import { PositionStats } from './hooks/usePositionStatistics'
-import { POSITION_MESSAGES } from './contants/positionConstants'
+import { PositionStats } from '../hooks/usePositionStatistics'
+import { POSITION_MESSAGES } from '../contants/positionConstants'
 
 
 interface PositionStatisticsProps {

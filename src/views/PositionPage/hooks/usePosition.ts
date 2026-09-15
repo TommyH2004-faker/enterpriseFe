@@ -29,27 +29,47 @@ export const usePosition = () => {
     }
   }
 
-  const createPosition = async (data: CreatePositionDTO) => {
-    try {
-      setLoading(true)
-      setError(null)
+  // const createPosition = async (data: CreatePositionDTO) => {
+  //   try {
+  //     setLoading(true)
+  //     setError(null)
 
-      const position = await positionService.create(data)
-      setPositions((prev) => [...prev, position])
+  //     const position = await positionService.create(data)
+  //     setPositions((prev) => [...prev, position])
 
-      return position
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Không thể tạo chức vụ',
-      )
-      throw error
-    } finally {
-      setLoading(false)
-    }
+  //     return position
+  //   } catch (error) {
+  //     setError(
+  //       error instanceof Error
+  //         ? error.message
+  //         : 'Không thể tạo chức vụ',
+  //     )
+  //     throw error
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+ const createPosition = async (data: CreatePositionDTO) => {
+  try {
+    setLoading(true)
+    setError(null)
+
+    await positionService.create(data)
+
+    // Backend chỉ trả ID => lấy lại danh sách để có Position đầy đủ
+    await fetchPositions()
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'Không thể tạo chức vụ',
+    )
+
+    throw error
+  } finally {
+    setLoading(false)
   }
-
+}
     const updatePosition = async (
     id: string,
     data: UpdatePositionDTO,

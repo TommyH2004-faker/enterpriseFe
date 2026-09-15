@@ -3,7 +3,7 @@ import {
   CButton
 } from '@coreui/react'
 import { cilPlus } from '@coreui/icons'
-import { POSITION_MESSAGES } from './contants/positionConstants'
+import { POSITION_MESSAGES } from '../contants/positionConstants'
 import CIcon from '@coreui/icons-react'
 
 

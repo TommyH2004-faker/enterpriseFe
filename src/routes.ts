@@ -21,8 +21,11 @@ const Settings = React.lazy(() => import('./views/settings/Settings'))
 const Activities = React.lazy(() => import('./views/activities/Activities'))
 const AuditLog = React.lazy(() => import('./views/audit/AuditLog'))
 const SearchResults = React.lazy(() => import('./views/search/SearchResults'))
-const RoleUser = React.lazy(() => import('./views/Role/PositonRoleUser.tsx')
-)
+const PositionRoleUser = React.lazy(() => import('./views/PositionPage/PositonRoleUser.tsx'))
+const RoleUser = React.lazy(() => import('./views/RolePage/RolePage.tsx'))
+const UserPage = React.lazy(() => import('./views/UserDetailPage/UserPage.tsx'))
+
+const PermissionPage = React.lazy(() => import('./views/PermissionPage/PermissionPage.tsx'))
 export const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
@@ -44,10 +47,27 @@ export const routes = [
   { path: '/reports', name: 'Báo cáo', element: Reports },
   { path: '/settings', name: 'Cài đặt', element: Settings },
     {
-    path: '/userroles',
+    path: '/positionuser',
     name: 'Vai trò người dùng',
+    element: PositionRoleUser,
+  },
+  {
+    path: '/roles',
+    name: 'Vai trò',
     element: RoleUser,
   },
+  { 
+    path: '/permissions', 
+    name: 'Quyền', 
+    element: PermissionPage
+  },
+  {
+    path: '/users',
+    name: 'Quản lý người dùng',
+    element: UserPage,
+  },
+ 
+
  
 ]
 

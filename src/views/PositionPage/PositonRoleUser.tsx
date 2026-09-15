@@ -9,13 +9,14 @@ import { usePositionFilters } from './hooks/usePositionFilters'
 import { usePositionForm } from './hooks/usePositionForm'
 import { usePositionStatistics } from './hooks/usePositionStatistics'
 import { usePosition } from './hooks/usePosition'
-import PositionPageHeader from './PositionPageHeader'
-import PositionStatistics from './PositionStatistics'
-import PositionTableHeader from './PositionTableHeader'
-import PositionTable from './PositionTable'
-import PositionTableFooter from './PositionTableFooter'
-import PositionFormModal from './PositionFormModal'
-import PositionDeleteModal from './PositionDeleteModal'
+import PositionPageHeader from './components/PositionPageHeader'
+import PositionStatistics from './components/PositionStatistics'
+import PositionTableHeader from './components/PositionTableHeader'
+import PositionTable from './components/PositionTable'
+import PositionTableFooter from './components/PositionTableFooter'
+import PositionFormModal from './components/PositionFormModal'
+import PositionDeleteModal from './components/PositionDeleteModal'
+import toast from 'react-hot-toast'
 
 // Components
 
@@ -86,7 +87,7 @@ const PositionRoleUser = () => {
       await deletePosition(selectedPosition.id)
       closeDeleteModal()
     } catch {
-      // usePosition đã xử lý error
+      toast.error('Không thể xóa chức vụ. Do có nhân viên đang gắn với chức vụ này.')
     }
   }
 

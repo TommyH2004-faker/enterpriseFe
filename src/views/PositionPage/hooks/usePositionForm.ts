@@ -17,7 +17,7 @@ const INITIAL_FORM_STATE: PositionFormState = {
 
 export const usePositionForm = (
   onSubmitSuccess: () => void,
-  createPosition: (data: CreatePositionDTO) => Promise<void>,
+  createPosition: (data: CreatePositionDTO) => Promise<Position>,
   updatePosition: (id: string, data: UpdatePositionDTO) => Promise<void>
 ) => {
   const [showModal, setShowModal] = useState(false)

@@ -1,5 +1,5 @@
 import React from 'react'
-import { POSITION_MESSAGES } from './contants/positionConstants'
+import { POSITION_MESSAGES } from '../contants/positionConstants'
 
 
 interface PositionTableFooterProps {

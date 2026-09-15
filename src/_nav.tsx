@@ -15,7 +15,7 @@ import {
   cilShieldAlt,
   cilSettings,
 } from '@coreui/icons'
-import { CNavItem, CNavTitle } from '@coreui/react'
+import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
 const _nav = [
   {
@@ -55,16 +55,33 @@ const _nav = [
   // Position By Department
   {
     component: CNavItem,
-    name: 'Vai trò người dùng',
-    to: '/userroles',
+    name: 'Quản lý chức vụ phòng ban',
+    to: '/positionuser',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name:'Role User',
-    to: '/roles',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-  },
+ {
+  component: CNavGroup,
+  name: 'Quản lý phân quyền',
+  icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+  items: [
+    {
+      component: CNavItem,
+      name: 'Vai trò',
+      to: '/roles',
+    },
+    {
+      component: CNavItem,
+      name: 'Quyền',
+      to: '/permissions',
+    },
+    {
+      component: CNavItem,
+      name: 'Quản lý  người dùng',
+      to: '/users',
+    }
+    
+  ],
+},
   {
     component: CNavTitle,
     name: 'Hệ thống',
