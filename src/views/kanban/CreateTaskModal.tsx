@@ -13,7 +13,8 @@ import {
   CModalHeader,
   CModalTitle,
 } from '@coreui/react'
-import { KanbanColumn } from '../../types/Project'
+import { KanbanColumn } from 'src/types/KanbanType/kanban'
+
 
 interface CreateTaskModalProps {
   visible: boolean
