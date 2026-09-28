@@ -1,9 +1,11 @@
+
 // src/views/projects/components/ProjectCreateDrawer.tsx
 
 import React from 'react'
 
 import {
   CButton,
+  CFormCheck,
   CFormInput,
   CFormLabel,
   CFormSelect,
@@ -19,14 +21,25 @@ import {
   ProjectPriorityLabel,
 } from 'src/types/ProjectType/project'
 
+import { EmployeeResponse } from 'src/types/Employee'
+
 interface Props {
   visible: boolean
 
   code: string
   name: string
   description: string
+
   departmentId: string
   managerId: string
+
+  // Thành viên được chọn
+  memberIds: string[]
+
+  // Tất cả nhân viên đang hoạt động
+  // Có thể thuộc bất kỳ phòng ban nào
+  projectMembers: EmployeeResponse[]
+
   startDate: string
   endDate: string
   priority: ProjectPriorityLabel
@@ -61,6 +74,10 @@ interface Props {
     value: string,
   ) => void
 
+  onMemberIdsChange: (
+    memberIds: string[],
+  ) => void
+
   onStartDateChange: (
     value: string,
   ) => void
@@ -76,12 +93,13 @@ interface Props {
 
 const ProjectCreateDrawer: React.FC<Props> = ({
   visible,
-
   code,
   name,
   description,
   departmentId,
   managerId,
+  memberIds,
+  projectMembers,
   startDate,
   endDate,
   priority,
@@ -101,10 +119,33 @@ const ProjectCreateDrawer: React.FC<Props> = ({
   onDescriptionChange,
   onDepartmentChange,
   onManagerChange,
+  onMemberIdsChange,
   onStartDateChange,
   onEndDateChange,
   onPriorityChange,
 }) => {
+  const handleMemberChange = (
+    memberId: string,
+    checked: boolean,
+  ) => {
+    if (checked) {
+      if (!memberIds.includes(memberId)) {
+        onMemberIdsChange([
+          ...memberIds,
+          memberId,
+        ])
+      }
+
+      return
+    }
+
+    onMemberIdsChange(
+      memberIds.filter(
+        (id) => id !== memberId,
+      ),
+    )
+  }
+
   return (
     <COffcanvas
       placement="end"
@@ -118,6 +159,9 @@ const ProjectCreateDrawer: React.FC<Props> = ({
       </COffcanvasHeader>
 
       <COffcanvasBody>
+        {/* =========================
+            MÃ DỰ ÁN
+        ========================== */}
         <div className="mb-3">
           <CFormLabel>
             Mã dự án
@@ -141,6 +185,9 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           )}
         </div>
 
+        {/* =========================
+            TÊN DỰ ÁN
+        ========================== */}
         <div className="mb-3">
           <CFormLabel>
             Tên dự án
@@ -163,6 +210,9 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           )}
         </div>
 
+        {/* =========================
+            MÔ TẢ
+        ========================== */}
         <div className="mb-3">
           <CFormLabel>
             Mô tả
@@ -179,6 +229,9 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           />
         </div>
 
+        {/* =========================
+            PHÒNG BAN
+        ========================== */}
         <div className="mb-3">
           <CFormLabel>
             Phòng ban
@@ -218,6 +271,9 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           )}
         </div>
 
+        {/* =========================
+            QUẢN LÝ DỰ ÁN
+        ========================== */}
         <div className="mb-3">
           <CFormLabel>
             Quản lý dự án
@@ -233,9 +289,12 @@ const ProjectCreateDrawer: React.FC<Props> = ({
             invalid={
               !!errors.managerId
             }
+            disabled={!departmentId}
           >
             <option value="">
-              Chọn quản lý
+              {departmentId
+                ? 'Chọn quản lý'
+                : 'Vui lòng chọn phòng ban trước'}
             </option>
 
             {managers.map((manager) => (
@@ -255,6 +314,90 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           )}
         </div>
 
+        {/* =========================
+            THÀNH VIÊN DỰ ÁN
+        ========================== */}
+        <div className="mb-3">
+          <CFormLabel>
+            Thành viên dự án
+          </CFormLabel>
+
+          {projectMembers.length === 0 ? (
+            <div className="border rounded p-3 text-body-secondary small">
+              Không có nhân viên đang hoạt động.
+            </div>
+          ) : (
+            <div
+              className="border rounded p-2"
+              style={{
+                maxHeight: '220px',
+                overflowY: 'auto',
+              }}
+            >
+              {projectMembers.map(
+                (employee) => {
+                  const employeeId =
+                    employee.userId
+
+                  const checked =
+                    memberIds.includes(
+                      employeeId,
+                    )
+
+                  return (
+                    <div
+                      key={employeeId}
+                      className="border-bottom py-2"
+                    >
+                      <CFormCheck
+                        id={`project-member-${employeeId}`}
+                        checked={checked}
+                        onChange={(e) =>
+                          handleMemberChange(
+                            employeeId,
+                            e.target.checked,
+                          )
+                        }
+                        label={
+                          <div>
+                            <div className="fw-semibold">
+                              {
+                                employee.fullName
+                              }
+                            </div>
+
+                            <div className="text-body-secondary small">
+                              {
+                                employee.positionName
+                              }
+
+                              {' · '}
+
+                              {
+                                employee.departmentName
+                              }
+                            </div>
+                          </div>
+                        }
+                      />
+                    </div>
+                  )
+                },
+              )}
+            </div>
+          )}
+
+          {projectMembers.length > 0 && (
+            <div className="text-body-secondary small mt-1">
+              Đã chọn {memberIds.length}/
+              {projectMembers.length} thành viên
+            </div>
+          )}
+        </div>
+
+        {/* =========================
+            NGÀY
+        ========================== */}
         <div className="row g-3 mb-3">
           <div className="col-md-6">
             <CFormLabel>
@@ -298,6 +441,9 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           </div>
         </div>
 
+        {/* =========================
+            ĐỘ ƯU TIÊN
+        ========================== */}
         <div className="mb-4">
           <CFormLabel>
             Độ ưu tiên
@@ -307,8 +453,7 @@ const ProjectCreateDrawer: React.FC<Props> = ({
             value={priority}
             onChange={(e) =>
               onPriorityChange(
-                e.target
-                  .value as ProjectPriorityLabel,
+                e.target.value as ProjectPriorityLabel,
               )
             }
           >
@@ -330,10 +475,14 @@ const ProjectCreateDrawer: React.FC<Props> = ({
           </CFormSelect>
         </div>
 
+        {/* =========================
+            ACTIONS
+        ========================== */}
         <div className="d-flex justify-content-end gap-2">
           <CButton
             color="light"
             onClick={onClose}
+            disabled={loading}
           >
             Hủy
           </CButton>
@@ -354,3 +503,4 @@ const ProjectCreateDrawer: React.FC<Props> = ({
 }
 
 export default ProjectCreateDrawer
+

@@ -1,158 +1,53 @@
-// /**
-//  * AppContent Component
-//  *
-//  * Main content area that renders routes defined in routes.js.
-//  * Handles lazy loading with Suspense and provides a loading spinner
-//  * while components are being loaded.
-//  *
-//  * Features:
-//  * - Dynamic route rendering from routes configuration
-//  * - Suspense boundary for lazy-loaded components
-//  * - Automatic redirect from root to dashboard
-//  * - Loading spinner fallback during component load
-//  *
-//  * @component
-//  * @example
-//  * return (
-//  *   <AppContent />
-//  * )
-//  */
-
-// import React, { Suspense } from 'react'
-// import { Navigate, Route, Routes } from 'react-router-dom'
-// import { CContainer, CSpinner } from '@coreui/react'
-
-// // routes config
-// import { routes } from '../routes'
-
-// const Page404 = React.lazy(() => import('../views/pages/page404/Page404'))
-
-// /**
-//  * AppContent functional component
-//  *
-//  * Renders all application routes within a container with:
-//  * - Suspense for lazy-loaded route components
-//  * - Spinner shown during component loading
-//  * - Default redirect to dashboard
-//  *
-//  * Memoized to prevent unnecessary re-renders when parent updates.
-//  *
-//  * @returns {React.ReactElement} Content container with routed views
-//  */
-// const AppContent = () => {
-//   return (
-//     <CContainer className="px-4" lg>
-//       <Suspense fallback={<CSpinner color="primary" />}>
-//         <Routes>
-//           {routes.map((route, idx) => {
-//             return (
-//               route.element && (
-//                 <Route
-//                   key={idx}
-//                   path={route.path}
-//                   element={<route.element />}
-//                 />
-//               )
-//             )
-//           })}
-//           <Route path="/" element={<Navigate to="dashboard" replace />} />
-//           <Route path="*" element={<Page404 />} />
-//         </Routes>
-//       </Suspense>
-//     </CContainer>
-//   )
-// }
-
-// export default React.memo(AppContent)
 import React, { Suspense } from 'react'
-import {
-  Navigate,
-  Route,
-  Routes,
-} from 'react-router-dom'
-import {
-  CContainer,
-  CSpinner,
-} from '@coreui/react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { CContainer, CSpinner } from '@coreui/react'
 
 // routes config
 import { routes } from '../routes'
 
-const Page404 = React.lazy(
-  () =>
-    import(
-      '../views/pages/page404/Page404'
-    ),
-)
+const Page404 = React.lazy(() => import('../views/pages/page404/Page404'))
 
 /**
  * Render route tree recursively.
  *
  * Supports:
  * - Normal routes
- * - Nested routes
+ * - Index routes (route.index = true)
+ * - Nested routes with <Outlet />
  * - Lazy-loaded components
- * - Outlet inside parent routes
  */
-const renderRoutes = (
-  routeList: any[],
-) => {
-  return routeList.map(
-    (route, idx) => {
-      if (!route.element) {
-        return null
-      }
+const renderRoutes = (routeList: any[]) => {
+  return routeList.map((route, idx) => {
+    if (!route.element) {
+      return null
+    }
 
-      const Element = route.element
+    const Element = route.element
 
-      return (
-        <Route
-          key={route.path || idx}
-          path={route.path}
-          element={<Element />}
-        >
-          {route.children &&
-            renderRoutes(route.children)}
-        </Route>
-      )
-    },
-  )
+    if (route.index) {
+      return <Route key={idx} index element={<Element />} />
+    }
+
+    return (
+      <Route key={route.path || idx} path={route.path} element={<Element />}>
+        {route.children && renderRoutes(route.children)}
+      </Route>
+    )
+  })
 }
 
 const AppContent = () => {
   return (
-    <CContainer
-      className="px-4"
-      lg
-    >
-      <Suspense
-        fallback={
-          <CSpinner color="primary" />
-        }
-      >
+    <CContainer className="px-4" lg>
+      <Suspense fallback={<CSpinner color="primary" />}>
         <Routes>
           {renderRoutes(routes)}
-
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/dashboard"
-                replace
-              />
-            }
-          />
-
-          <Route
-            path="*"
-            element={<Page404 />}
-          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Page404 />} />
         </Routes>
       </Suspense>
     </CContainer>
   )
 }
 
-export default React.memo(
-  AppContent,
-)
+export default React.memo(AppContent)

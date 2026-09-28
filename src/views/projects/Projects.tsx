@@ -37,10 +37,10 @@ import ProjectFiltersComponent from './components/ProjectFilters'
 import ProjectGrid from './components/ProjectGrid'
 import ProjectList from './components/ProjectList'
 import ProjectCreateDrawer from './components/ProjectCreateDrawer'
-import ProjectEditDrawer from './components/ProjectEditDrawer'
+
 import ProjectDeleteModal from './components/ProjectDeleteModal'
 import ProjectEmptyState from './components/ProjectEmptyState'
-import ProjectStatusMenu from './components/ProjectStatusMenu'
+import ProjectStatusModal from './components/ProjectStatusModal'
 import { ProjectFilter, ProjectOption, ProjectSummary } from 'src/types/ProjectType/project'
 import { departmentService } from 'src/services/departmentService'
 import { employeeService } from 'src/services/employeeService'
@@ -131,63 +131,60 @@ const Projects: React.FC = () => {
         : null,
     })
 
-  const actions =
-    useProjectActions()
-
- const [departments, setDepartments] = useState<ProjectOption[]>([])
+  const actions =useProjectActions()
+  const [projectMembers, setProjectMembers] =useState<EmployeeResponse[]>([])
+  const [departments, setDepartments] = useState<ProjectOption[]>([])
   const [employees, setEmployees] = useState<EmployeeResponse[]>([])
   const [managers, setManagers] = useState<ProjectOption[]>([])
-    useEffect(() => {
+
+  useEffect(() => {
     const loadOptions = async () => {
       try {
-        const [departmentResult, employeeResult] =
-          await Promise.all([
-            departmentService.getAllDepartments(1, 100),
-            employeeService.getEmployees(),
-          ])
+        const [
+          departmentResult,
+          employeeResult,
+        ] = await Promise.all([
+          departmentService.getAllDepartments(1,100,),
+          // Lấy toàn bộ employee.
+          // Không truyền departmentId.
+          employeeService.getEmployees(),
+        ])
 
         setDepartments(
-          departmentResult.items.map((department) => ({
-            id: department.id,
-            name: department.name,
-          })),
+          departmentResult.items.map(
+            (department) => ({
+              id: department.id,
+              name: department.name,
+            }),
+          ),
         )
 
         setEmployees(employeeResult)
+        // Project members có thể đến từ bất kỳ
+        // phòng ban nào, chỉ cần employee đang active.
+        setProjectMembers(
+          employeeResult.filter(
+            (employee) => employee.isActive,
+          ),
+        )
       } catch (error) {
-        console.error('Failed to load project options:', error)
+        console.error(
+          'Failed to load project options:',
+          error,
+        )
 
         setDepartments([])
         setEmployees([])
+        setProjectMembers([])
         setManagers([])
       }
     }
 
     loadOptions()
   }, [])
-    const handleCreateDepartmentChange = (
-    departmentId: string,
-  ) => {
-    // Cập nhật Department cho form
-    createForm.setDepartmentId(departmentId)
 
-    // Mỗi lần đổi Department phải xóa Manager cũ
-    createForm.setManagerId('')
 
-    // Chỉ lấy nhân viên thuộc Department đang chọn
-    const departmentManagers = employees
-      .filter(
-        (employee) =>
-          employee.isActive &&
-          employee.departmentId === departmentId,
-      )
-      .map((employee) => ({
-        id: employee.userId,
-        name: employee.fullName,
-      }))
 
-    setManagers(departmentManagers)
-  }
   const hasFilter = useMemo(() => {
     return Boolean(
       filters.search ||
@@ -196,7 +193,70 @@ const Projects: React.FC = () => {
         filters.managerId,
     )
   }, [filters])
+  const handleCreateDepartmentChange = (
+    departmentId: string,
+  ) => {
+    // ==========================================
+    // PROJECT DEPARTMENT
+    // ==========================================
 
+    createForm.setDepartmentId(
+      departmentId,
+    )
+
+    // Đổi phòng ban Project
+    // => Manager phải chọn lại
+    createForm.setManagerId('')
+
+    // ==========================================
+    // KHÔNG RESET MEMBER
+    // ==========================================
+    //
+    // Member không phụ thuộc department của Project.
+    //
+    // Ví dụ:
+    // Project Department = Backend
+    //
+    // Members:
+    // - Backend A
+    // - Frontend B
+    // - QA C
+    //
+    // Nếu đổi Project Department:
+    // Backend -> Product
+    //
+    // Các member trên vẫn được giữ.
+    //
+    // KHÔNG được:
+    // createForm.setMemberIds([])
+
+    // ==========================================
+    // MANAGER
+    // ==========================================
+    //
+    // Manager vẫn bị giới hạn theo department
+    // của Project.
+    //
+
+    const departmentManagers = employees
+      .filter(
+        (employee) =>
+          employee.isActive &&
+          employee.departmentId ===
+            departmentId &&
+          employee.positionName
+            ?.toUpperCase() ===
+            'MANAGER',
+      )
+      .map((employee) => ({
+        id: employee.userId,
+        name: employee.fullName,
+      }))
+
+    setManagers(
+      departmentManagers,
+    )
+  }
   const openDetail = (
     projectId: string,
   ) => {
@@ -410,10 +470,11 @@ const Projects: React.FC = () => {
         <ProjectGrid
           projects={data.items}
           onOpen={openDetail}
-          onMenu={setStatusProject}
-          onOpenKanban={
-            openKanban
-          }
+          onEdit={(proj) => setEditingProject(proj)}
+          onStatus={(proj) => setStatusProject(proj)}
+          onSettings={(id) => navigate(`/projects/${id}/settings`)}
+          onDelete={(proj) => setDeletingProject(proj)}
+          onOpenKanban={openKanban}
         />
       ) : (
         <CCard>
@@ -421,110 +482,69 @@ const Projects: React.FC = () => {
             <ProjectList
               projects={data.items}
               onOpen={openDetail}
-              onMenu={setStatusProject}
+              onEdit={(proj) => setEditingProject(proj)}
+              onStatus={(proj) => setStatusProject(proj)}
+              onSettings={(id) => navigate(`/projects/${id}/settings`)}
+              onDelete={(proj) => setDeletingProject(proj)}
             />
           </CCardBody>
         </CCard>
       )}
 
       <ProjectCreateDrawer
-        visible={showCreate}
-        code={createForm.code}
-        name={createForm.name}
-        description={
-          createForm.description
-        }
-        departmentId={
-          createForm.departmentId
-        }
-        managerId={
-          createForm.managerId
-        }
-        startDate={
-          createForm.startDate
-        }
-        endDate={
-          createForm.endDate
-        }
-        priority={
-          createForm.priority
-        }
-        departments={departments}
-        managers={managers}
-        errors={createForm.errors}
-        loading={formLoading}
-        onClose={() =>
-          setShowCreate(false)
-        }
-        onSubmit={handleCreate}
-        onCodeChange={
-          createForm.setCode
-        }
-        onNameChange={
-          createForm.setName
-        }
-        onDescriptionChange={
-          createForm.setDescription
-        }
-        onDepartmentChange={
-          handleCreateDepartmentChange
-        }
-        onManagerChange={
-          createForm.setManagerId
-        }
-        onStartDateChange={
-          createForm.setStartDate
-        }
-        onEndDateChange={
-          createForm.setEndDate
-        }
-        onPriorityChange={
-          createForm.setPriority
-        }
-      />
+      visible={showCreate}
+      code={createForm.code}
+      name={createForm.name}
+      description={createForm.description}
+      departmentId={createForm.departmentId}
+      managerId={createForm.managerId}
 
-      {editingProject && (
-        <ProjectEditDrawer
-          visible
-          projectCode={
-            editingProject.code
-          }
-          name={editForm.name}
-          description={
-            editForm.description
-          }
-          startDate={
-            editForm.startDate
-          }
-          endDate={
-            editForm.endDate
-          }
-          priority={
-            editForm.priority
-          }
-          errors={editForm.errors}
-          loading={formLoading}
-          onClose={() =>
-            setEditingProject(null)
-          }
-          onSubmit={handleEdit}
-          onNameChange={
-            editForm.setName
-          }
-          onDescriptionChange={
-            editForm.setDescription
-          }
-          onStartDateChange={
-            editForm.setStartDate
-          }
-          onEndDateChange={
-            editForm.setEndDate
-          }
-          onPriorityChange={
-            editForm.setPriority
-          }
-        />
-      )}
+      memberIds={createForm.memberIds}
+      projectMembers={projectMembers}
+
+      startDate={createForm.startDate}
+      endDate={createForm.endDate}
+      priority={createForm.priority}
+
+      departments={departments}
+      managers={managers}
+
+      errors={createForm.errors}
+      loading={formLoading}
+
+      onClose={() => setShowCreate(false)}
+      onSubmit={handleCreate}
+
+      onCodeChange={createForm.setCode}
+      onNameChange={createForm.setName}
+      onDescriptionChange={createForm.setDescription}
+
+      onDepartmentChange={
+        handleCreateDepartmentChange
+      }
+
+      onManagerChange={
+        createForm.setManagerId
+      }
+
+      onMemberIdsChange={
+        createForm.setMemberIds
+      }
+
+      onStartDateChange={
+        createForm.setStartDate
+      }
+
+      onEndDateChange={
+        createForm.setEndDate
+      }
+
+      onPriorityChange={
+        createForm.setPriority
+      }
+    />
+
+     
 
       {deletingProject && (
         <ProjectDeleteModal
@@ -544,96 +564,41 @@ const Projects: React.FC = () => {
         />
       )}
 
-      {statusProject && (
-        <ProjectStatusMenu
-          status={
-            statusProject.status
-          }
-          isActive={
-            statusProject.isActive
-          }
-          loading={
-            actions.loading
-          }
-          onStart={() =>
-            runStatusAction(
-              () =>
-                actions.start(
-                  statusProject.id,
-                ),
-            )
-          }
-          onHold={() =>
-            runStatusAction(
-              () =>
-                actions.hold(
-                  statusProject.id,
-                ),
-            )
-          }
-          onResume={() =>
-            runStatusAction(
-              () =>
-                actions.resume(
-                  statusProject.id,
-                ),
-            )
-          }
-          onComplete={() =>
-            runStatusAction(
-              () =>
-                actions.complete(
-                  statusProject.id,
-                ),
-            )
-          }
-          onCancel={() =>
-            runStatusAction(
-              () =>
-                actions.cancel(
-                  statusProject.id,
-                ),
-            )
-          }
-          onActivate={() =>
-            runStatusAction(
-              () =>
-                actions.activate(
-                  statusProject.id,
-                ),
-            )
-          }
-          onDeactivate={() =>
-            runStatusAction(
-              () =>
-                actions.deactivate(
-                  statusProject.id,
-                ),
-            )
-          }
-        />
-      )}
+      <ProjectStatusModal
+        visible={!!statusProject}
+        projectName={statusProject?.name ?? ''}
+        projectCode={statusProject?.code ?? ''}
+        currentStatus={statusProject?.status ?? 'Planning'}
+        isActive={statusProject?.isActive}
+        loading={actions.loading}
+        onClose={() => setStatusProject(null)}
+        onStart={() =>
+          runStatusAction(() => actions.start(statusProject!.id))
+        }
+        onHold={() =>
+          runStatusAction(() => actions.hold(statusProject!.id))
+        }
+        onResume={() =>
+          runStatusAction(() => actions.resume(statusProject!.id))
+        }
+        onComplete={() =>
+          runStatusAction(() => actions.complete(statusProject!.id))
+        }
+        onCancel={() =>
+          runStatusAction(() => actions.cancel(statusProject!.id))
+        }
+        onActivate={() =>
+          runStatusAction(() => actions.activate(statusProject!.id))
+        }
+        onDeactivate={() =>
+          runStatusAction(() => actions.deactivate(statusProject!.id))
+        }
+      />
     </div>
   )
 }
 
-/*
- * ==========================================================
- * TODO: Replace these two functions with your existing
- * departmentService / employeeService.
- * ==========================================================
- */
 
-async function apiGetDepartments(): Promise<
-  ProjectOption[]
-> {
-  return []
-}
 
-async function apiGetManagers(): Promise<
-  ProjectOption[]
-> {
-  return []
-}
 
 export default Projects

@@ -43,6 +43,9 @@ export const useProjectForm = ({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
 
+  // Thành viên dự án
+  const [memberIds, setMemberIds] = useState<string[]>([])
+
   const [departmentId, setDepartmentId] =
     useState('')
 
@@ -63,10 +66,16 @@ export const useProjectForm = ({
     useState<Record<string, string>>({})
 
   useEffect(() => {
+    // =========================
+    // CREATE MODE
+    // =========================
     if (!project) {
       setCode('')
       setName('')
       setDescription('')
+
+      setMemberIds([])
+
       setDepartmentId('')
       setManagerId('')
       setStartDate('')
@@ -77,6 +86,9 @@ export const useProjectForm = ({
       return
     }
 
+    // =========================
+    // EDIT MODE
+    // =========================
     setCode(project.code || '')
     setName(project.name || '')
     setDescription(project.description || '')
@@ -92,6 +104,10 @@ export const useProjectForm = ({
         project.manager?.id ||
         '',
     )
+
+   setMemberIds(
+    project.memebers?.map((m) => m.userId) || [],
+  )
 
     setStartDate(
       project.startDate
@@ -154,18 +170,26 @@ export const useProjectForm = ({
     return Object.keys(nextErrors).length === 0
   }
 
+  // =========================
+  // CREATE PROJECT
+  // =========================
   // UI string -> API number
   const buildCreateRequest =
     (): CreateProjectRequest => {
       const request: CreateProjectRequest = {
         code: code.trim(),
+
         name: name.trim(),
 
         description:
           description.trim() || undefined,
 
         departmentId,
+
         managerId,
+
+        // Thành viên được chọn trong phòng ban
+        memberIds,
 
         startDate:
           startDate || null,
@@ -179,15 +203,23 @@ export const useProjectForm = ({
       console.log(
         '========== BUILD CREATE PROJECT REQUEST ==========',
       )
+
       console.log(
         JSON.stringify(request, null, 2),
       )
+
       console.log(
         'priority:',
         request.priority,
         'type:',
         typeof request.priority,
       )
+
+      console.log(
+        'memberIds:',
+        request.memberIds,
+      )
+
       console.log(
         '==================================================',
       )
@@ -195,6 +227,9 @@ export const useProjectForm = ({
       return request
     }
 
+  // =========================
+  // UPDATE PROJECT
+  // =========================
   // UI string -> API number
   const buildUpdateRequest =
     (): UpdateProjectRequest => ({
@@ -222,6 +257,10 @@ export const useProjectForm = ({
     description,
     setDescription,
 
+    // Project members
+    memberIds,
+    setMemberIds,
+
     departmentId,
     setDepartmentId,
 
@@ -245,4 +284,3 @@ export const useProjectForm = ({
     buildUpdateRequest,
   }
 }
-

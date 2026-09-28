@@ -3,7 +3,8 @@ import { Draggable } from '@hello-pangea/dnd'
 import { CBadge } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCalendar, cilCommentSquare, cilPaperclip, cilUser } from '@coreui/icons'
-import { KanbanTask } from '../../types/Project'
+import { KanbanTask } from 'src/types/KanbanType/kanban'
+
 
 interface KanbanTaskCardProps {
   task: KanbanTask
@@ -11,12 +12,26 @@ interface KanbanTaskCardProps {
   onClick: (task: KanbanTask) => void
 }
 
-const priorityColor = (priority?: string) => {
-  if (priority === 'Critical' || priority === 'Khẩn cấp') return 'danger'
-  if (priority === 'High' || priority === 'Cao') return 'warning'
-  if (priority === 'Medium' || priority === 'Trung bình') return 'info'
-  if (priority === 'Low' || priority === 'Thấp') return 'secondary'
-  return 'secondary'
+// const priorityColor = (priority?: string) => {
+//   if (priority === 'Critical' || priority === 'Khẩn cấp') return 'danger'
+//   if (priority === 'High' || priority === 'Cao') return 'warning'
+//   if (priority === 'Medium' || priority === 'Trung bình') return 'info'
+//   if (priority === 'Low' || priority === 'Thấp') return 'secondary'
+//   return 'secondary'
+// }
+const priorityColor = (priority: number) => {
+  switch (priority) {
+    case 1:
+      return 'secondary'
+    case 2:
+      return 'info'
+    case 3:
+      return 'warning'
+    case 4:
+      return 'danger'
+    default:
+      return 'secondary'
+  }
 }
 
 export const KanbanTaskCard: React.FC<KanbanTaskCardProps> = ({ task, index, onClick }) => {
@@ -50,7 +65,7 @@ export const KanbanTaskCard: React.FC<KanbanTaskCardProps> = ({ task, index, onC
               <span className="small text-muted font-monospace" style={{ fontSize: '11px' }}>
                 #{task.id.slice(-6)}
               </span>
-              <CBadge color={priorityColor(task.priority)} className="px-2 py-1">
+              <CBadge color={priorityColor(task.priority  )} className="px-2 py-1">
                 {task.priority || 'Trung bình'}
               </CBadge>
             </div>

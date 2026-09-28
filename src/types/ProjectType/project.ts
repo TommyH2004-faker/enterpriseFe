@@ -15,6 +15,7 @@ export type ProjectPriorityLabel =
   | 'Medium'
   | 'High'
   | 'Critical'
+
 export interface ApiError {
   code?: string
   description?: string
@@ -95,10 +96,9 @@ export interface CreateProjectRequest {
 
   departmentId: string
   managerId: string
-
+  memberIds: string[]
   startDate?: string | null
   endDate?: string | null
-
   priority: ProjectPriority
 }
 

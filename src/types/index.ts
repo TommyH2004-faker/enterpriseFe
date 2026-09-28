@@ -10,6 +10,7 @@ export interface Department {
 
 export interface Employee {
   id: number | string;
+  userId: string;
   name: string;
   email: string;
   department: string;

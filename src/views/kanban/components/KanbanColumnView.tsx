@@ -3,8 +3,9 @@ import { Droppable } from '@hello-pangea/dnd'
 import { CBadge, CButton } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus } from '@coreui/icons'
-import { KanbanColumn, KanbanTask } from '../../types/Project'
-import { KanbanTaskCard } from './KanbanTaskCard'
+import { KanbanColumn, KanbanTask } from 'src/types/KanbanType/kanban'
+import { KanbanTaskCard } from '../KanbanTaskCard'
+
 
 interface KanbanColumnViewProps {
   column: KanbanColumn

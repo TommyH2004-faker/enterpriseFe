@@ -61,17 +61,7 @@ const ProjectCardMenu: React.FC<Props> = ({
           Xem chi tiết
         </CDropdownItem>
 
-        {canUpdate && (
-          <CDropdownItem
-            onClick={onEdit}
-          >
-            <CIcon
-              icon={cilPencil}
-              className="me-2"
-            />
-            Chỉnh sửa
-          </CDropdownItem>
-        )}
+      
 
         {canUpdate && (
           <CDropdownItem

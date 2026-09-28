@@ -10,7 +10,8 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilArrowLeft, cilPlus, cilSearch, cilTask } from '@coreui/icons'
-import { KanbanBoardSummary, ProjectDetail } from '../../types/Project'
+import { ProjectDetail } from 'src/types/ProjectType/project'
+import { KanbanBoardSummary } from 'src/types/KanbanType/kanban'
 
 interface KanbanHeaderProps {
   project: ProjectDetail | null

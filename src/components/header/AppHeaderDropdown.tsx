@@ -44,8 +44,8 @@ const AppHeaderDropdown = () => {
       try {
         const data = await headerService.getNotificationCount()
         setNotifications(data)
-      } catch (error) {
-        console.error('Failed to load notifications:', error)
+      } catch {
+        // Fallback gracefully when notifications API endpoint is not yet implemented on backend
       } finally {
         setLoading(false)
       }
