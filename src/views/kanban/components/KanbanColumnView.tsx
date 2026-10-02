@@ -10,6 +10,7 @@ import { KanbanTaskCard } from '../KanbanTaskCard'
 interface KanbanColumnViewProps {
   column: KanbanColumn
   tasks: KanbanTask[]
+  members?: Array<{ id: string; name: string; email?: string; [key: string]: any }>
   onTaskClick: (task: KanbanTask) => void
   onAddTask: (columnId: string) => void
 }
@@ -24,6 +25,7 @@ const columnDotColors: Record<string, string> = {
 export const KanbanColumnView: React.FC<KanbanColumnViewProps> = ({
   column,
   tasks,
+  members = [],
   onTaskClick,
   onAddTask,
 }) => {
@@ -72,6 +74,7 @@ export const KanbanColumnView: React.FC<KanbanColumnViewProps> = ({
                 key={task.id}
                 task={task}
                 index={index}
+                members={members}
                 onClick={onTaskClick}
               />
             ))}

@@ -36,7 +36,7 @@ export interface KanbanTask {
   columnId: string
   title: string
   description: string
-  priority: number
+  priority: 'Low' | 'Medium' | 'High'
   position: number
   assignees: KanbanUser[]
   dueDate?: string

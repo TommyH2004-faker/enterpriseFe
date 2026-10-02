@@ -3,14 +3,16 @@ import { activityService } from 'src/services/activityService'
 import { attachmentService } from 'src/services/attachmentService'
 import { checklistService } from 'src/services/checklistService'
 import { commentService } from 'src/services/commentService'
+import { employeeService } from 'src/services/employeeService'
 import { labelService } from 'src/services/labelService'
+import { projectService, ProjectMemberResponse } from 'src/services/projectService'
 import { taskService } from 'src/services/taskService'
 import { TaskActivityResponse } from 'src/types/TaskDetailType/activity'
 import { TaskAttachmentResponse } from 'src/types/TaskDetailType/attachment'
 import { ChecklistResponse } from 'src/types/TaskDetailType/checklist'
 import { TaskCommentResponse } from 'src/types/TaskDetailType/comment'
 import { ProjectLabelResponse, TaskLabelResponse } from 'src/types/TaskDetailType/label'
-import { TaskDetailResponse } from 'src/types/TaskDetailType/task'
+import { TaskDetailResponse } from 'src/types/task'
 
 
 interface UseTaskDetailOptions {
@@ -27,8 +29,10 @@ export interface TaskDetailState {
   attachments: TaskAttachmentResponse[]
   projectLabels: ProjectLabelResponse[]
   taskLabels: TaskLabelResponse[]
+  projectMembers: ProjectMemberResponse[]
   activities: TaskActivityResponse[]
   assigneeIds: string[]
+  labelIds: string[]
 }
 
 const EMPTY_STATE: TaskDetailState = {
@@ -38,8 +42,10 @@ const EMPTY_STATE: TaskDetailState = {
   attachments: [],
   projectLabels: [],
   taskLabels: [],
+  projectMembers: [],
   activities: [],
   assigneeIds: [],
+  labelIds: [],
 }
 
 export function useTaskDetail({
@@ -61,6 +67,29 @@ export function useTaskDetail({
     await onChanged?.()
   }, [onChanged])
 
+  const resolveTaskLabels = (
+    fetchedLabels: TaskLabelResponse[],
+    currentTask: TaskDetailResponse,
+    pLabels: ProjectLabelResponse[],
+  ): TaskLabelResponse[] => {
+    if (fetchedLabels && fetchedLabels.length > 0) {
+      return fetchedLabels
+    }
+    const ids = currentTask.labelIds || []
+    return ids.map((lid) => {
+      const pl = pLabels.find((p) => p.id.toLowerCase() === lid.toLowerCase())
+      return {
+        id: lid,
+        taskId: currentTask.id,
+        labelId: lid,
+        name: pl?.name || 'Label',
+        color: pl?.color || '#0d6efd',
+        description: pl?.description || '',
+        assignedAt: new Date().toISOString(),
+      }
+    })
+  }
+
   const loadCoreData = useCallback(async () => {
     if (!taskId) return
 
@@ -68,16 +97,49 @@ export function useTaskDetail({
     setError(null)
 
     try {
-      const [task, checklists, comments, attachments, taskLabels, activities, projectLabels] =
+      const [task, checklists, comments, attachments, rawTaskLabels, activities, projectLabels, projectMembers, allEmployees] =
         await Promise.all([
           taskService.getTaskDetail(taskId),
-          checklistService.getTaskChecklists(taskId),
-          commentService.getTaskComments(taskId),
-          attachmentService.getTaskAttachments(taskId),
-          labelService.getTaskLabels(taskId),
-          activityService.getTaskActivities(taskId),
-          projectId ? labelService.getProjectLabels(projectId) : Promise.resolve([]),
+          checklistService.getTaskChecklists(taskId).catch(() => []),
+          commentService.getTaskComments(taskId).catch(() => []),
+          attachmentService.getTaskAttachments(taskId).catch(() => []),
+          labelService.getTaskLabels(taskId).catch(() => []),
+          activityService.getTaskActivities(taskId).catch(() => []),
+          projectId ? labelService.getProjectLabels(projectId).catch(() => []) : Promise.resolve([]),
+          projectId ? projectService.getProjectMembers(projectId).catch(() => []) : Promise.resolve([]),
+          employeeService.getEmployees().catch(() => []),
         ])
+
+      const taskLabels = resolveTaskLabels(rawTaskLabels, task, projectLabels)
+      
+        const rawAssignees =
+          (task as any)?.assignees ||
+          (task as any)?.data?.assignees ||
+          []
+
+        const taskAssigneeIds: string[] = Array.isArray(rawAssignees)
+          ? rawAssignees
+              .map((assignee: any) => assignee?.id)
+              .filter((id: any): id is string => typeof id === 'string' && id.length > 0)
+          : []
+
+      // Merge all member info
+      const combinedMembersList: ProjectMemberResponse[] = [...(projectMembers || [])]
+      const existingIds = new Set(combinedMembersList.map((m) => m.id.toLowerCase()))
+
+      ;(allEmployees || []).forEach((emp: any) => {
+        const empId = emp.id || emp.userId
+        if (empId && !existingIds.has(empId.toLowerCase())) {
+          existingIds.add(empId.toLowerCase())
+          combinedMembersList.push({
+            id: empId,
+            name: emp.fullName || emp.name,
+            email: emp.email || '',
+            role: emp.positionName || '',
+            department: emp.departmentName || '',
+          })
+        }
+      })
 
       setState((current) => ({
         ...current,
@@ -87,8 +149,12 @@ export function useTaskDetail({
         attachments,
         projectLabels,
         taskLabels,
+        projectMembers: combinedMembersList,
         activities,
+        assigneeIds: taskAssigneeIds.length > 0 ? taskAssigneeIds : current.assigneeIds,
+        labelIds: task.labelIds ?? (task as any)?.data?.labelIds ?? [],
       }))
+      setAssigneeInitialized(true)
     } catch (err) {
       console.error('Failed to load task detail:', err)
       setError('Không thể tải đầy đủ dữ liệu chi tiết công việc.')
@@ -98,16 +164,16 @@ export function useTaskDetail({
   }, [projectId, taskId])
 
   useEffect(() => {
-    setState({
-      ...EMPTY_STATE,
-      assigneeIds: initialAssigneeIds ?? [],
-    })
-    setAssigneeInitialized(initialAssigneeIds !== undefined)
-
     if (taskId) {
+      if (initialAssigneeIds && initialAssigneeIds.length > 0) {
+        setState((curr) => ({ ...curr, assigneeIds: initialAssigneeIds }))
+      }
       void loadCoreData()
+    } else {
+      setState(EMPTY_STATE)
+      setAssigneeInitialized(false)
     }
-  }, [initialAssigneeIds, loadCoreData, taskId])
+  }, [taskId, projectId])
 
   const runAction = useCallback(async (action: () => Promise<void>) => {
     setActionLoading(true)
@@ -138,11 +204,20 @@ export function useTaskDetail({
   const updateAssignees = useCallback(async () => {
     if (!taskId) return
     await runAction(async () => {
-      await taskService.updateTaskAssignees(taskId, { employeeIds: state.assigneeIds })
+      const validGuids = Array.from(new Set(
+        (state.assigneeIds || []).filter((id) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id),
+        ),
+      ))
+      await taskService.updateTaskAssignees(taskId, {
+        employeeIds: validGuids,
+      })
       setAssigneeInitialized(true)
+      await loadCoreData()
       await notifyChanged()
     })
-  }, [notifyChanged, runAction, state.assigneeIds, taskId])
+  }, [loadCoreData, notifyChanged, runAction, state.assigneeIds, taskId])
+ 
 
   const moveTask = useCallback(
     async (columnId: string, position: number) => {
@@ -385,11 +460,21 @@ export function useTaskDetail({
       if (!taskId) return
       await runAction(async () => {
         await labelService.assignTaskLabel(taskId, { labelId })
-        const taskLabels = await labelService.getTaskLabels(taskId)
-        setState((current) => ({ ...current, taskLabels }))
+        const [rawTaskLabels, task] = await Promise.all([
+          labelService.getTaskLabels(taskId).catch(() => []),
+          taskService.getTaskDetail(taskId),
+        ])
+        const resolved = resolveTaskLabels(rawTaskLabels, task, state.projectLabels)
+        setState((current) => ({
+          ...current,
+          task,
+          taskLabels: resolved,
+          labelIds: task.labelIds ?? [],
+        }))
+        await notifyChanged()
       })
     },
-    [runAction, taskId],
+    [notifyChanged, runAction, state.projectLabels, taskId],
   )
 
   const removeTaskLabel = useCallback(
@@ -397,11 +482,21 @@ export function useTaskDetail({
       if (!taskId) return
       await runAction(async () => {
         await labelService.removeTaskLabel(taskId, labelId)
-        const taskLabels = await labelService.getTaskLabels(taskId)
-        setState((current) => ({ ...current, taskLabels }))
+        const [rawTaskLabels, task] = await Promise.all([
+          labelService.getTaskLabels(taskId).catch(() => []),
+          taskService.getTaskDetail(taskId),
+        ])
+        const resolved = resolveTaskLabels(rawTaskLabels, task, state.projectLabels)
+        setState((current) => ({
+          ...current,
+          task,
+          taskLabels: resolved,
+          labelIds: task.labelIds ?? [],
+        }))
+        await notifyChanged()
       })
     },
-    [runAction, taskId],
+    [notifyChanged, runAction, state.projectLabels, taskId],
   )
 
   const updateAssigneeSelection = useCallback((employeeIds: string[]) => {

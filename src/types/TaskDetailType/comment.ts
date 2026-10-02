@@ -4,6 +4,7 @@ export interface TaskCommentResponse {
   id: Guid
   taskId: Guid
   employeeId: Guid
+  employeeName: string
   content: string
   createdAt: DateTimeString
   updatedAt: DateTimeString | null

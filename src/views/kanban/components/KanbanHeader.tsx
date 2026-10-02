@@ -119,19 +119,17 @@ export const KanbanHeader: React.FC<KanbanHeaderProps> = ({
                 onChange={(event) => onSearchChange(event.target.value)}
               />
             </div>
-
-            {/* Priority Filter */}
-            <CFormSelect
-              className="w-auto bg-light"
-              value={priority}
-              onChange={(event) => onPriorityChange(event.target.value)}
-            >
-              <option value="">Tất cả mức ưu tiên</option>
-              <option value="Critical">Khẩn cấp</option>
-              <option value="High">Cao</option>
-              <option value="Medium">Trung bình</option>
-              <option value="Low">Thấp</option>
-            </CFormSelect>
+           {/* Priority Filter */}
+          <CFormSelect
+            className="w-auto bg-light"
+            value={priority}
+            onChange={(event) => onPriorityChange(event.target.value)}
+          >
+            <option value="">Tất cả mức ưu tiên</option>
+            <option value="3">Cao</option>
+            <option value="2">Trung bình</option>
+            <option value="1">Thấp</option>
+          </CFormSelect>
 
             {boardLoading && <CSpinner size="sm" color="primary" />}
           </div>

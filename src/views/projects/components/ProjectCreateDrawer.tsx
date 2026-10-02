@@ -468,10 +468,6 @@ const ProjectCreateDrawer: React.FC<Props> = ({
             <option value="High">
               High
             </option>
-
-            <option value="Critical">
-              Critical
-            </option>
           </CFormSelect>
         </div>
 

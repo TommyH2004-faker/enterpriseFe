@@ -27,6 +27,7 @@ export interface TaskMemberOption {
 export interface TaskLabelOption {
   id: string
   name: string
+  color?: string
 }
 
 interface CreateTaskModalProps {
@@ -42,6 +43,9 @@ interface CreateTaskModalProps {
   labels?: TaskLabelOption[]
 
   onClose: () => void
+
+  /** Callback tạo label mới từ bên ngoài (KanbanBoard gọi API rồi refresh) */
+  onCreateLabel?: (name: string, color: string) => Promise<void>
 
   onSubmit: (params: {
     projectId: string
@@ -76,6 +80,7 @@ export const CreateTaskModal: React.FC<
   members = [],
   labels = [],
   onClose,
+  onCreateLabel,
   onSubmit,
 }) => {
   const [title, setTitle] = useState('')
@@ -99,6 +104,12 @@ export const CreateTaskModal: React.FC<
     useState<string[]>([])
 
   const [error, setError] = useState('')
+
+  // --- Label creation inline state ---
+  const [isCreatingLabel, setIsCreatingLabel] = useState(false)
+  const [newLabelName, setNewLabelName] = useState('')
+  const [newLabelColor, setNewLabelColor] = useState('#0d6efd')
+  const [labelCreating, setLabelCreating] = useState(false)
 
   const safeColumns = Array.isArray(columns)
     ? columns
@@ -143,6 +154,9 @@ export const CreateTaskModal: React.FC<
     setLabelIds([])
 
     setError('')
+    setIsCreatingLabel(false)
+    setNewLabelName('')
+    setNewLabelColor('#0d6efd')
   }, [
     visible,
     defaultColumnId,
@@ -161,7 +175,7 @@ export const CreateTaskModal: React.FC<
     )
   }
 
-  const handleLabelChange = (
+  const handleLabelToggle = (
     labelId: string,
   ) => {
     setLabelIds((current) =>
@@ -171,6 +185,19 @@ export const CreateTaskModal: React.FC<
           )
         : [...current, labelId],
     )
+  }
+
+  const handleCreateLabel = async () => {
+    if (!newLabelName.trim() || !onCreateLabel) return
+    setLabelCreating(true)
+    try {
+      await onCreateLabel(newLabelName.trim(), newLabelColor)
+      setNewLabelName('')
+      setNewLabelColor('#0d6efd')
+      setIsCreatingLabel(false)
+    } finally {
+      setLabelCreating(false)
+    }
   }
 
   const handleSubmit = (
@@ -436,20 +463,15 @@ export const CreateTaskModal: React.FC<
                 }
                 className="bg-light"
               >
-                <option value={0}>
+                 <option value={1}>
                   Thấp
                 </option>
 
-                <option value={1}>
+                <option value={2}>
                   Trung bình
                 </option>
-
-                <option value={2}>
-                  Cao
-                </option>
-
                 <option value={3}>
-                  Khẩn cấp
+                  Cao
                 </option>
               </CFormSelect>
             </div>
@@ -627,47 +649,185 @@ export const CreateTaskModal: React.FC<
           {/* ========================= */}
 
           <div className="mb-2">
-            <CFormLabel className="fw-semibold text-dark">
-              Label
-            </CFormLabel>
-
-            <div className="border rounded p-3 bg-light">
-              {safeLabels.length === 0 ? (
-                <div className="text-muted small">
-                  Chưa có label trong dự án.
-                </div>
-              ) : (
-                <div
-                  className="row g-2"
-                  style={{
-                    maxHeight: 160,
-                    overflowY: 'auto',
-                  }}
+            {/* Header */}
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <CFormLabel className="fw-semibold text-dark mb-0">
+                Label
+              </CFormLabel>
+              {onCreateLabel && !isCreatingLabel && (
+                <span
+                  className="small text-primary fw-semibold"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setIsCreatingLabel(true)}
                 >
-                  {safeLabels.map(
-                    (label) => (
-                      <div
-                        className="col-md-4"
-                        key={label.id}
-                      >
-                        <CFormCheck
-                          id={`label-${label.id}`}
-                          label={label.name}
-                          checked={labelIds.includes(
-                            label.id,
-                          )}
-                          onChange={() =>
-                            handleLabelChange(
-                              label.id,
-                            )
-                          }
-                        />
-                      </div>
-                    ),
-                  )}
-                </div>
+                  + Tạo nhãn mới
+                </span>
               )}
             </div>
+
+            {/* Nhãn đã chọn — danh sách dọc cuộn */}
+            {labelIds.length > 0 && (
+              <div
+                style={{
+                  maxHeight: 90,
+                  overflowY: 'auto',
+                  background: '#f0f4ff',
+                  border: '1px solid #d0d9f0',
+                  borderRadius: 6,
+                  padding: '4px 0',
+                  marginBottom: 8,
+                }}
+              >
+                {labelIds.map((id) => {
+                  const label = safeLabels.find((l) => l.id === id)
+                  if (!label) return null
+                  const color = label.color || '#0d6efd'
+                  return (
+                    <div
+                      key={id}
+                      className="d-flex align-items-center justify-content-between px-2 py-1"
+                    >
+                      <div className="d-flex align-items-center gap-2">
+                        <span
+                          style={{
+                            width: 10, height: 10, borderRadius: '50%',
+                            backgroundColor: color,
+                            display: 'inline-block',
+                            flexShrink: 0,
+                            border: '1.5px solid rgba(0,0,0,0.1)',
+                          }}
+                        />
+                        <span className="small fw-semibold" style={{ color }}>{label.name}</span>
+                      </div>
+                      <span
+                        style={{ cursor: 'pointer', opacity: 0.5, fontSize: '16px', lineHeight: 1, flexShrink: 0 }}
+                        onClick={() => handleLabelToggle(id)}
+                        title="Bỏ chọn"
+                      >
+                        ×
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Form tạo label mới inline */}
+            {isCreatingLabel ? (
+              <div className="bg-white p-2 rounded-3 border shadow-sm mb-2">
+                <div className="d-flex gap-2 align-items-center mb-2">
+                  <CFormInput
+                    type="color"
+                    size="sm"
+                    className="p-0 border-0 shadow-none"
+                    style={{ width: 30, height: 30, cursor: 'pointer' }}
+                    value={newLabelColor}
+                    onChange={(e) => setNewLabelColor(e.target.value)}
+                    title="Chọn màu nhãn"
+                  />
+                  {/* Preview badge */}
+                  <span
+                    className="d-inline-flex align-items-center px-2 py-1 rounded-pill small fw-semibold flex-shrink-0"
+                    style={{
+                      backgroundColor: newLabelColor,
+                      color: '#fff',
+                      fontSize: '12px',
+                      minWidth: 48,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {newLabelName || 'Nhãn mới'}
+                  </span>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Tên nhãn mới..."
+                    className="border-0 bg-light flex-grow-1"
+                    value={newLabelName}
+                    onChange={(e) => setNewLabelName(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleCreateLabel() } }}
+                  />
+                </div>
+                <div className="d-flex justify-content-end gap-2">
+                  <CButton
+                    size="sm" color="light" className="border text-muted" type="button"
+                    onClick={() => { setIsCreatingLabel(false); setNewLabelName(''); setNewLabelColor('#0d6efd') }}
+                  >
+                    Hủy
+                  </CButton>
+                  <CButton
+                    size="sm" color="primary" type="button"
+                    disabled={labelCreating || !newLabelName.trim()}
+                    onClick={() => void handleCreateLabel()}
+                  >
+                    Tạo nhãn
+                  </CButton>
+                </div>
+              </div>
+            ) : (
+              /* Danh sách label — list dọc cuộn */
+              <div
+                style={{
+                  maxHeight: 160,
+                  overflowY: 'auto',
+                  background: '#f8f9fa',
+                  border: '1px solid #dee2e6',
+                  borderRadius: 6,
+                  padding: '4px 0',
+                }}
+              >
+                {safeLabels.length === 0 ? (
+                  <div className="text-muted small px-3 py-1">
+                    Chưa có label trong dự án.{' '}
+                    {onCreateLabel && (
+                      <span
+                        className="text-primary fw-semibold"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setIsCreatingLabel(true)}
+                      >
+                        Tạo ngay
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  safeLabels.map((label) => {
+                    const isSelected = labelIds.includes(label.id)
+                    const color = label.color || '#0d6efd'
+                    return (
+                      <div
+                        key={label.id}
+                        className="d-flex align-items-center justify-content-between px-3 py-1"
+                        style={{
+                          cursor: 'pointer',
+                          background: isSelected ? `${color}18` : 'transparent',
+                          transition: 'background 0.12s',
+                        }}
+                        onClick={() => handleLabelToggle(label.id)}
+                        title={isSelected ? 'Bỏ chọn nhãn này' : 'Chọn nhãn này'}
+                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#e9ecef' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = isSelected ? `${color}18` : 'transparent' }}
+                      >
+                        <div className="d-flex align-items-center gap-2">
+                          <span
+                            style={{
+                              width: 10, height: 10, borderRadius: '50%',
+                              backgroundColor: color,
+                              display: 'inline-block',
+                              flexShrink: 0,
+                              border: '1.5px solid rgba(0,0,0,0.1)',
+                            }}
+                          />
+                          <span className="small fw-semibold" style={{ color }}>{label.name}</span>
+                        </div>
+                        {isSelected && (
+                          <span style={{ color, fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            )}
           </div>
         </CModalBody>
 
@@ -696,3 +856,5 @@ export const CreateTaskModal: React.FC<
     </CModal>
   )
 }
+
+  export default CreateTaskModal

@@ -1,21 +1,18 @@
+import { ApiResponse } from "src/api/authApi"
 import axiosClient from "src/api/axiosClient"
 import { CreateCommentRequest, CreateCommentResponse, TaskCommentResponse, UpdateCommentRequest } from "src/types/TaskDetailType/comment"
-import { unwrapArray } from "./utils/unwrapApiResponse"
 
 const BASE_URL = '/api/v1'
 
 export const commentService = {
   async getTaskComments(
-  taskId: string,
-): Promise<TaskCommentResponse[]> {
-  const response = await axiosClient.get(
-    `${BASE_URL}/tasks/${taskId}/comments`,
-  )
-
-  return unwrapArray<TaskCommentResponse>(
-    response.data,
-  )
-},
+    taskId: string,
+  ): Promise<TaskCommentResponse[]> {
+    const response = await axiosClient.get<ApiResponse<TaskCommentResponse[]>>(
+      `${BASE_URL}/tasks/${taskId}/comments`,
+    )
+    return response.data.data ?? []
+  },
 
   async createComment(
     taskId: string,

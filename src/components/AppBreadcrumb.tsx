@@ -3,7 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { routes } from '../routes'
 
-import { CBreadcrumb, CBreadcrumbItem } from '@coreui/react'
+import { CButton, CBreadcrumb, CBreadcrumbItem } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilArrowLeft } from '@coreui/icons'
 
 const AppBreadcrumb = () => {
   const currentLocation = useLocation().pathname
@@ -33,7 +35,18 @@ const AppBreadcrumb = () => {
   const breadcrumbs = getBreadcrumbs(currentLocation)
 
   return (
-    <CBreadcrumb className="my-0">
+    <div className="d-flex align-items-center gap-2">
+      <CButton
+        color="light"
+        size="sm"
+        className="border d-inline-flex align-items-center justify-content-center px-2"
+        title="Quay lại trang trước"
+        aria-label="Quay lại trang trước"
+        onClick={() => navigate(-1)}
+      >
+        <CIcon icon={cilArrowLeft} />
+      </CButton>
+      <CBreadcrumb className="my-0">
       {/* Dùng onClick + navigate thay vì href để tránh full page reload */}
       <CBreadcrumbItem
         onClick={() => navigate('/dashboard')}
@@ -56,7 +69,8 @@ const AppBreadcrumb = () => {
           </CBreadcrumbItem>
         )
       })}
-    </CBreadcrumb>
+      </CBreadcrumb>
+    </div>
   )
 }
 

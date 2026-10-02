@@ -1,6 +1,6 @@
+import { ApiResponse } from "src/api/authApi"
 import axiosClient from "src/api/axiosClient"
 import { ChangeChecklistItemOrderRequest, ChecklistItemResponse, ChecklistResponse, CreateChecklistItemRequest, CreateChecklistRequest, UpdateChecklistItemRequest, UpdateChecklistRequest } from "src/types/TaskDetailType/checklist"
-import { unwrapArray } from "./utils/unwrapApiResponse"
 
 const BASE_URL = '/api/v1'
 
@@ -8,18 +8,15 @@ export const checklistService = {
   async getTaskChecklists(
     taskId: string,
   ): Promise<ChecklistResponse[]> {
-    const response = await axiosClient.get(
+    const response = await axiosClient.get<ApiResponse<ChecklistResponse[]>>(
       `${BASE_URL}/tasks/${taskId}/checklists`,
     )
+    return response.data.data ?? []
+  },
 
-    return unwrapArray<ChecklistResponse>(
-      response.data,
-    )
-  }
-  ,
   async getChecklist(id: string): Promise<ChecklistResponse> {
-    const response = await axiosClient.get<ChecklistResponse>(`${BASE_URL}/checklists/${id}`)
-    return response.data
+    const response = await axiosClient.get<ApiResponse<ChecklistResponse>>(`${BASE_URL}/checklists/${id}`)
+    return response.data.data
   },
 
   async createChecklist(taskId: string, payload: CreateChecklistRequest): Promise<unknown> {
@@ -51,17 +48,17 @@ export const checklistService = {
   },
 
   async getChecklistItems(checklistId: string): Promise<ChecklistItemResponse[]> {
-    const response = await axiosClient.get<ChecklistItemResponse[]>(
+    const response = await axiosClient.get<ApiResponse<ChecklistItemResponse[]>>(
       `${BASE_URL}/checklists/${checklistId}/items`,
     )
-    return response.data
+    return response.data.data ?? []
   },
 
   async getChecklistItem(id: string): Promise<ChecklistItemResponse> {
-    const response = await axiosClient.get<ChecklistItemResponse>(
+    const response = await axiosClient.get<ApiResponse<ChecklistItemResponse>>(
       `${BASE_URL}/checklist-items/${id}`,
     )
-    return response.data
+    return response.data.data
   },
 
   async createChecklistItem(
@@ -89,17 +86,17 @@ export const checklistService = {
   },
 
   async completeChecklistItem(id: string): Promise<ChecklistItemResponse> {
-    const response = await axiosClient.put<ChecklistItemResponse>(
+    const response = await axiosClient.put<ApiResponse<ChecklistItemResponse>>(
       `${BASE_URL}/checklist-items/${id}/complete`,
     )
-    return response.data
+    return response.data.data
   },
 
   async reopenChecklistItem(id: string): Promise<ChecklistItemResponse> {
-    const response = await axiosClient.put<ChecklistItemResponse>(
+    const response = await axiosClient.put<ApiResponse<ChecklistItemResponse>>(
       `${BASE_URL}/checklist-items/${id}/reopen`,
     )
-    return response.data
+    return response.data.data
   },
 
   async changeChecklistItemOrder(

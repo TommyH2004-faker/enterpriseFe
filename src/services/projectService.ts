@@ -32,13 +32,12 @@ export interface AddProjectMemberRequest {
 }
 export interface ProjectMemberResponse {
   id: string
+  userId?: string
+  employeeId?: string
   name: string
   email: string
   role: string
   department: string
-}
-const unwrap = <T>(response: { data: ApiEnvelope<T> }): T => {
-  return response.data.data
 }
 
 export const projectService = {
@@ -61,7 +60,7 @@ export const projectService = {
       },
     )
 
-    return unwrap(response)
+    return response.data.data
   },
 async createTask(params: {
   projectId: string
@@ -115,7 +114,7 @@ async createTask(params: {
       `${BASE_URL}/${projectId}`,
     )
 
-    return unwrap(response)
+    return response.data.data
   },
   
   async getProjectTasks(
@@ -142,7 +141,7 @@ async createTask(params: {
       `${BASE_URL}/${projectId}/progress`,
     )
 
-    return unwrap(response)
+    return response.data.data
   },
 
   async getStatistics(
@@ -152,7 +151,7 @@ async createTask(params: {
       `${BASE_URL}/${projectId}/statistics`,
     )
 
-    return unwrap(response)
+    return response.data.data
   },
 
   async createProject(
@@ -163,7 +162,7 @@ async createTask(params: {
       request,
     )
 
-    return unwrap(response)
+    return response.data.data
   },
 
   async updateProject(
@@ -265,7 +264,7 @@ async createTask(params: {
     const response = await axiosClient.get<ApiEnvelope<KanbanBoardSummary[]>>(
       `${BASE_URL}/${projectId}/boards`,
     )
-    return unwrap(response)
+    return response.data.data
   },
 
   async createBoard(projectId: string, request: CreateBoardRequest): Promise<KanbanBoardSummary> {
@@ -273,14 +272,14 @@ async createTask(params: {
       `${BASE_URL}/${projectId}/boards`,
       request,
     )
-    return unwrap(response)
+    return response.data.data
   },
 
   async getBoard(projectId: string, boardId: string): Promise<KanbanBoardDetail> {
     const response = await axiosClient.get<ApiEnvelope<KanbanBoardDetail>>(
       `${BASE_URL}/${projectId}/boards/${boardId}`,
     )
-    return unwrap(response)
+    return response.data.data
   },
 
 
@@ -291,7 +290,7 @@ async getBoardTasks(
   const response = await axiosClient.get<ApiEnvelope<KanbanTask[]>>(
     `/api/v1/boards/${projectId}/${boardId}/tasks`,
   )
-  return unwrap(response)
+  return response.data.data
 },
 
 

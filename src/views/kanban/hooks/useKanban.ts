@@ -11,6 +11,7 @@ import {
   KanbanTask,
 } from 'src/types/KanbanType/kanban'
 import { ProjectDetail } from 'src/types/ProjectType/project'
+import taskService from 'src/services/taskService'
 
 /**
  * Chuyển KanbanTask -> Task dùng cho TaskDetailModal.
@@ -24,17 +25,17 @@ export const toTaskModal = (task: KanbanTask): Task => ({
   id: task.id,
   content: task.title,
   description: task.description || '',
-  priority:
-    task.priority === 3
-      ? 'Khẩn cấp'
-      : task.priority === 2
-        ? 'Cao'
-        : task.priority === 1
-          ? 'Trung bình'
-          : 'Thấp',
-
+ priority:
+  task.priority === 'High'
+    ? 'Cao'
+    : task.priority === 'Medium'
+      ? 'Trung bình'
+      : 'Thấp',
   assignee:
     task.assignees?.[0]?.fullName ||
+    (task.assignees?.[0] as any)?.name ||
+    (task as any)?.assigneeName ||
+    (typeof (task as any)?.assignee === 'string' ? (task as any).assignee : null) ||
     'Chưa phân công',
 
   dueDate: task.dueDate
@@ -54,6 +55,26 @@ export const toTaskModal = (task: KanbanTask): Task => ({
 /**
  * Filter task trên Kanban.
  */
+// export const matchesTaskFilter = (
+//   task: KanbanTask,
+//   search: string,
+//   priority: string,
+// ) => {
+//   const matchesSearch =
+//     !search ||
+//     `${task.title} ${task.description || ''}`
+//       .toLowerCase()
+//       .includes(search.toLowerCase())
+
+//   /**
+//    * priority của KanbanTask là number.
+//    * Filter từ select là string.
+//    */
+//   const matchesPriority =
+//     !priority || task.priority === Number(priority)
+
+//   return matchesSearch && matchesPriority
+// }
 export const matchesTaskFilter = (
   task: KanbanTask,
   search: string,
@@ -65,12 +86,14 @@ export const matchesTaskFilter = (
       .toLowerCase()
       .includes(search.toLowerCase())
 
-  /**
-   * priority của KanbanTask là number.
-   * Filter từ select là string.
-   */
+  const priorityMap: Record<string, string> = {
+    '1': 'Low',
+    '2': 'Medium',
+    '3': 'High',
+  }
+
   const matchesPriority =
-    !priority || task.priority === Number(priority)
+    !priority || task.priority === priorityMap[priority]
 
   return matchesSearch && matchesPriority
 }
@@ -693,28 +716,31 @@ export const useKanban = () => {
     )
   }
 
-  // =========================================================
-  // DELETE TASK
-  // =========================================================
-
-  /**
-   * Hiện tại chưa có DELETE task endpoint
-   * trong contract backend được cung cấp.
-   *
-   * Không mock xóa khỏi FE.
-   */
-  const deleteTask = async (
-    taskId: string,
-  ) => {
-    if (!board) {
-      return
-    }
-
-    console.warn(
-      'deleteTask chưa được nối API backend:',
-      taskId,
-    )
+const deleteTask = async (taskId: string) => {
+  if (!board) {
+    return
   }
+
+  try {
+    await taskService.deleteTask(taskId)
+
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard
+
+      return {
+        ...prevBoard,
+        columns: prevBoard.columns.map((column) => ({
+          ...column,
+          tasks: column.tasks.filter(
+            (task) => task.id !== taskId,
+          ),
+        })),
+      }
+    })
+  } catch (error) {
+    console.error('Lỗi khi xóa task:', error)
+  }
+}
 
   // =========================================================
   // OPEN CREATE TASK MODAL

@@ -1,17 +1,16 @@
+import { ApiResponse } from "src/api/authApi"
 import axiosClient from "src/api/axiosClient"
 import { AssignTaskLabelRequest, CreateProjectLabelRequest, ProjectLabelResponse, TaskLabelResponse, UpdateLabelRequest } from "src/types/TaskDetailType/label"
-import { unwrapArray } from "./utils/unwrapApiResponse"
 
 const BASE_URL = '/api/v1'
 
 export const labelService = {
- async getProjectLabels(projectId: string): Promise<ProjectLabelResponse[]> {
-  const response = await axiosClient.get(
-    `${BASE_URL}/projects/${projectId}/labels`,
-  )
-
-  return unwrapArray<ProjectLabelResponse>(response.data)
-},
+  async getProjectLabels(projectId: string): Promise<ProjectLabelResponse[]> {
+    const response = await axiosClient.get<ApiResponse<ProjectLabelResponse[]>>(
+      `${BASE_URL}/projects/${projectId}/labels`,
+    )
+    return response.data.data ?? []
+  },
 
   async createLabel(
     projectId: string,
@@ -34,17 +33,12 @@ export const labelService = {
     return response.data
   },
 
- async getTaskLabels(
-  taskId: string,
-): Promise<TaskLabelResponse[]> {
-  const response = await axiosClient.get(
-    `${BASE_URL}/tasks/${taskId}/labels`,
-  )
-
-  return unwrapArray<TaskLabelResponse>(
-    response.data,
-  )
-},
+  async getTaskLabels(taskId: string): Promise<TaskLabelResponse[]> {
+    const response = await axiosClient.get<ApiResponse<TaskLabelResponse[]>>(
+      `${BASE_URL}/tasks/${taskId}/labels`,
+    )
+    return response.data.data ?? []
+  },
 
   async assignTaskLabel(
     taskId: string,

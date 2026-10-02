@@ -18,11 +18,12 @@
  * )
  */
 
-import React, { useEffect, useRef } from 'react'
-import { NavLink } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   CContainer,
+  CBadge,
   CDropdown,
   CDropdownItem,
   CDropdownMenu,
@@ -47,6 +48,7 @@ import {
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
+import { headerService } from 'src/services/headerService'
 
 /**
  * AppHeader functional component
@@ -60,11 +62,37 @@ import { AppHeaderDropdown } from './header/index'
  * @returns {React.ReactElement} Header component with navigation and controls
  */
 const AppHeader = () => {
-  const headerRef = useRef()
+  const navigate = useNavigate()
+  const headerRef = useRef<HTMLDivElement>(null)
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
   const dispatch = useDispatch()
-  const sidebarShow = useSelector((state) => state.sidebarShow)
+  const sidebarShow = useSelector<{ sidebarShow: boolean }, boolean>((state) => state.sidebarShow)
+
+  useEffect(() => {
+    let disposed = false
+
+    const loadUnreadMessages = async () => {
+      try {
+        const data = await headerService.getNotificationCount()
+        if (!disposed) setUnreadMessages(data.messages)
+      } catch {
+        if (!disposed) setUnreadMessages(0)
+      }
+    }
+
+    void loadUnreadMessages()
+    const interval = window.setInterval(() => void loadUnreadMessages(), 30000)
+    const handleChatUnreadChanged = () => void loadUnreadMessages()
+    window.addEventListener('chat:unread-changed', handleChatUnreadChanged)
+
+    return () => {
+      disposed = true
+      window.clearInterval(interval)
+      window.removeEventListener('chat:unread-changed', handleChatUnreadChanged)
+    }
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,8 +123,20 @@ const AppHeader = () => {
         </CHeaderNav>
         <CHeaderNav className="ms-auto">
           <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilBell} size="lg" />
+            <CNavLink href="/messages" onClick={(event) => { event.preventDefault(); navigate('/messages') }}>
+              <span className="position-relative d-inline-flex">
+                <CIcon icon={cilBell} size="lg" />
+                {unreadMessages > 0 && (
+                  <CBadge
+                    color="danger"
+                    shape="rounded-pill"
+                    className="position-absolute top-0 start-100 translate-middle"
+                    style={{ fontSize: '9px', minWidth: '17px', padding: '3px 5px' }}
+                  >
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </CBadge>
+                )}
+              </span>
             </CNavLink>
           </CNavItem>
           <CNavItem>

@@ -222,13 +222,19 @@ export const authStorage = {
         }
       )
 
+      const refreshPayload = response.data?.data ?? response.data
+
       const {
         accessToken,
         accessTokenExpiresAt,
         antiCsrfToken,
         roles,
         permissions,
-      } = response.data
+      } = refreshPayload
+
+      if (!accessToken) {
+        throw new Error('Refresh response did not contain an access token.')
+      }
 
       // Update vào storage
       authStorage.updateAccessToken(

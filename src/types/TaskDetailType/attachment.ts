@@ -15,3 +15,13 @@ export interface TaskAttachmentResponse {
 export interface UploadAttachmentRequest {
   file: File
 }
+
+export interface AttachmentListData {
+  items: TaskAttachmentResponse[]
+  pageNumber: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+  hasPreviousPage: boolean
+  hasNextPage: boolean
+}
