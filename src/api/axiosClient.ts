@@ -1,11 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { authStorage } from '../services/authStorage'
 
+
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true,
   timeout: 10000,
 })
@@ -28,12 +26,22 @@ const processQueue = (error: any, token: string | null = null) => {
 }
 
 // Request interceptor
+
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const accessToken = authStorage.getAccessToken()
+
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
     }
+
+    if (config.data instanceof FormData) {
+      // Không ép JSON hoặc tự đặt multipart boundary.
+      config.headers.delete('Content-Type')
+    } else if (!config.headers.get('Content-Type')) {
+      config.headers.set('Content-Type', 'application/json')
+    }
+
     return config
   },
   (error) => Promise.reject(error),

@@ -1,23 +1,3 @@
-/**
- * AppHeader Component
- *
- * Main application header with navigation, theme switcher, and user menu.
- * Features include:
- * - Sidebar toggle button
- * - Primary navigation links
- * - Notification and action icons
- * - Theme switcher (light/dark/auto)
- * - User dropdown menu
- * - Breadcrumb navigation
- * - Sticky positioning with scroll shadow effect
- *
- * @component
- * @example
- * return (
- *   <AppHeader />
- * )
- */
-
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
@@ -37,7 +17,6 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
-  cilBell,
   cilContrast,
   cilEnvelopeOpen,
   cilList,
@@ -48,20 +27,13 @@ import {
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
+import AppHeaderNotifications from './header/AppHeaderNotifications'
 import { headerService } from 'src/services/headerService'
+import { useNotificationConnection } from 'src/hooks/useNotificationConnection'
 
-/**
- * AppHeader functional component
- *
- * Manages header UI including:
- * - Redux integration for sidebar state
- * - Theme management with CoreUI useColorModes hook
- * - Scroll-based shadow effect
- * - Responsive navigation
- *
- * @returns {React.ReactElement} Header component with navigation and controls
- */
 const AppHeader = () => {
+  useNotificationConnection()
+
   const navigate = useNavigate()
   const headerRef = useRef<HTMLDivElement>(null)
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
@@ -116,16 +88,22 @@ const AppHeader = () => {
         <CHeaderNav className="d-none d-md-flex align-items-center w-100 me-4">
           <div className="input-group" style={{ maxWidth: '400px', marginLeft: '1rem' }}>
             <span className="input-group-text bg-transparent border-end-0">
-              <CIcon icon={cilMenu} size="sm" style={{ opacity: 0 }} /> {/* Placeholder for search icon */}
+              <CIcon icon={cilMenu} size="sm" style={{ opacity: 0 }} />
             </span>
             <input type="text" className="form-control border-start-0" placeholder="Tìm kiếm công việc, dự án..." />
           </div>
         </CHeaderNav>
         <CHeaderNav className="ms-auto">
+          <AppHeaderNotifications />
+          <CNavItem>
+            <CNavLink href="#">
+              <CIcon icon={cilList} size="lg" />
+            </CNavLink>
+          </CNavItem>
           <CNavItem>
             <CNavLink href="/messages" onClick={(event) => { event.preventDefault(); navigate('/messages') }}>
               <span className="position-relative d-inline-flex">
-                <CIcon icon={cilBell} size="lg" />
+                <CIcon icon={cilEnvelopeOpen} size="lg" />
                 {unreadMessages > 0 && (
                   <CBadge
                     color="danger"
@@ -137,16 +115,6 @@ const AppHeader = () => {
                   </CBadge>
                 )}
               </span>
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilList} size="lg" />
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilEnvelopeOpen} size="lg" />
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
