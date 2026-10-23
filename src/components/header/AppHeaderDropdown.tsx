@@ -1,5 +1,5 @@
 // src/components/header/AppHeaderDropdown.tsx
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CAvatar,
@@ -11,23 +11,12 @@ import {
   CDropdownMenu,
   CDropdownToggle,
 } from '@coreui/react'
-import {
-  cilBell,
-  cilCreditCard,
-  cilCommentSquare,
-  cilEnvelopeOpen,
-  cilFile,
-  cilLockLocked,
-  cilSettings,
-  cilTask,
-  cilUser,
-  cilAccountLogout,
-} from '@coreui/icons'
+import { cilAccountLogout, cilEnvelopeOpen, cilFile, cilTask, cilUser } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 
-import avatar8 from '../../assets/images/avatars/8.jpg'
 import { headerService, NotificationData } from 'src/services/headerService'
-
+import profileService from 'src/services/profileService'
+import type { UserProfile } from 'src/types/profile'
 
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()
@@ -38,22 +27,59 @@ const AppHeaderDropdown = () => {
     comments: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [projectCount, setProjectCount] = useState(0)
+
+  // Thông tin hiển thị trên avatar header
+  const [me, setMe] = useState<UserProfile | null>(null)
+
+  // Tải hồ sơ lần đầu và lắng nghe khi trang Hồ sơ lưu thay đổi.
+  useEffect(() => {
+    let cancelled = false
+
+    profileService
+      .getMyProfile()
+      .then((data) => {
+        if (!cancelled) setMe(data.user)
+      })
+      .catch((error) => console.error('Failed to load profile:', error))
+
+    const unsubscribe = profileService.subscribeProfileChanged(setMe)
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [])
 
   useEffect(() => {
     const loadNotifications = async () => {
       try {
         const data = await headerService.getNotificationCount()
         setNotifications(data)
-      } catch {
-        // Fallback gracefully when notifications API endpoint is not yet implemented on backend
+      } catch (error) {
+        console.error('Failed to load notifications:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    loadNotifications()
+    const loadProjectCount = async () => {
+      try {
+        const count = await headerService.getProjectCount()
+        setProjectCount(count)
+      } catch (error) {
+        console.error('Failed to load project count:', error)
+      }
+    }
 
-    const interval = setInterval(loadNotifications, 30000)
+    loadNotifications()
+    loadProjectCount()
+
+    const interval = setInterval(() => {
+      loadNotifications()
+      loadProjectCount()
+    }, 30000)
+
     return () => clearInterval(interval)
   }, [])
 
@@ -73,31 +99,26 @@ const AppHeaderDropdown = () => {
     }
   }
 
+  const avatarSrc = profileService.resolveFileUrl(me?.avatarUrl)
+  const displayName = me?.fullName || me?.username || ''
+  const initial = displayName.trim().charAt(0).toUpperCase()
+
   return (
     <CDropdown variant="nav-item">
-      {/* FIX: Loại bỏ placement từ CDropdownToggle */}
       <CDropdownToggle className="py-0 pe-0" caret={false}>
-        <CAvatar src={avatar8} size="md" />
+        {avatarSrc ? (
+          <CAvatar src={avatarSrc} size="md" />
+        ) : (
+          <CAvatar color="primary" textColor="white" size="md">
+            {initial || <CIcon icon={cilUser} />}
+          </CAvatar>
+        )}
       </CDropdownToggle>
 
-      {/* FIX: Dùng align thay vì placement */}
       <CDropdownMenu className="pt-0 dropdown-menu-end">
         <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">
-          Account
+          {displayName || 'Account'}
         </CDropdownHeader>
-
-        <CDropdownItem
-          onClick={() => handleNavigate('/updates', 'updates')}
-          style={{ cursor: 'pointer' }}
-        >
-          <CIcon icon={cilBell} className="me-2" />
-          Updates
-          {!loading && notifications.updates > 0 && (
-            <CBadge color="info" className="ms-2">
-              {notifications.updates}
-            </CBadge>
-          )}
-        </CDropdownItem>
 
         <CDropdownItem
           onClick={() => handleNavigate('/messages', 'messages')}
@@ -126,47 +147,11 @@ const AppHeaderDropdown = () => {
         </CDropdownItem>
 
         <CDropdownItem
-          onClick={() => handleNavigate('/comments', 'comments')}
-          style={{ cursor: 'pointer' }}
-        >
-          <CIcon icon={cilCommentSquare} className="me-2" />
-          Comments
-          {!loading && notifications.comments > 0 && (
-            <CBadge color="warning" className="ms-2">
-              {notifications.comments}
-            </CBadge>
-          )}
-        </CDropdownItem>
-
-        <CDropdownHeader className="bg-body-secondary fw-semibold my-2">
-          Settings
-        </CDropdownHeader>
-
-        <CDropdownItem
           onClick={() => handleNavigate('/profile', 'profile')}
           style={{ cursor: 'pointer' }}
         >
           <CIcon icon={cilUser} className="me-2" />
           Profile
-        </CDropdownItem>
-
-        <CDropdownItem
-          onClick={() => handleNavigate('/settings', 'settings')}
-          style={{ cursor: 'pointer' }}
-        >
-          <CIcon icon={cilSettings} className="me-2" />
-          Settings
-        </CDropdownItem>
-
-        <CDropdownItem
-          onClick={() => handleNavigate('/payments', 'payments')}
-          style={{ cursor: 'pointer' }}
-        >
-          <CIcon icon={cilCreditCard} className="me-2" />
-          Payments
-          <CBadge color="secondary" className="ms-2">
-            0
-          </CBadge>
         </CDropdownItem>
 
         <CDropdownItem
@@ -176,19 +161,11 @@ const AppHeaderDropdown = () => {
           <CIcon icon={cilFile} className="me-2" />
           Projects
           <CBadge color="primary" className="ms-2">
-            0
+            {projectCount}
           </CBadge>
         </CDropdownItem>
 
         <CDropdownDivider />
-
-        <CDropdownItem
-          onClick={() => handleNavigate('/lock-account', 'lock')}
-          style={{ cursor: 'pointer' }}
-        >
-          <CIcon icon={cilLockLocked} className="me-2" />
-          Lock Account
-        </CDropdownItem>
 
         <CDropdownItem
           onClick={handleLogout}

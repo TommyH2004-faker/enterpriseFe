@@ -143,11 +143,22 @@ export class ChatService {
     return response.data.data ?? []
   }
 
-  /** GIẢ ĐỊNH route — sửa lại nếu backend khác */
   async getDepartments(): Promise<DepartmentItem[]> {
-    const response = await axiosClient.get<ApiResponse<DepartmentItem[]>>('/api/v1/departments')
-    return response.data.data ?? []
+    const response = await axiosClient.get<
+      ApiResponse<{
+        items: DepartmentItem[]
+        pageNumber: number
+        pageSize: number
+        totalCount: number
+        totalPages: number
+        hasPreviousPage: boolean
+        hasNextPage: boolean
+      }>
+    >('/api/v1/departments/get-all')
+
+    return response.data.data?.items ?? []
   }
+
 
   async createDirect(targetUserId: string): Promise<ConversationDetail> {
     const response = await axiosClient.post<ApiResponse<ConversationDetail>>(
