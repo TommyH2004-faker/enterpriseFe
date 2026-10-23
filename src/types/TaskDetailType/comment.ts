@@ -1,4 +1,4 @@
-import type { DateTimeString, Guid } from './task'
+import { DateTimeString, Guid } from "../task"
 
 export interface TaskCommentResponse {
   id: Guid
