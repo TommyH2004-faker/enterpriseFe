@@ -66,9 +66,11 @@ const VerifyEmail: React.FC = () => {
                 <div className="fw-semibold">Kích hoạt thất bại</div>
                 <div>{errorMessage}</div>
               </CAlert>
-              <CButton component={Link} to="/login" color="primary">
+              <Link to="/login" className="text-decoration-none">
+              <CButton color="primary">
                 Quay lại đăng nhập
               </CButton>
+            </Link>
             </>
           )}
         </CCardBody>

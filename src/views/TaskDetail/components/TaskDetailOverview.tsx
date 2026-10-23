@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { CButton, CFormTextarea, CRow, CCol, CBadge } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilAlignLeft } from '@coreui/icons'
-import { TaskDetailResponse, UpdateTaskRequest } from 'src/types/TaskDetailType/task'
+import { TaskDetailResponse, UpdateTaskRequest } from 'src/types/task'
+
 
 interface TaskDetailOverviewProps {
   task: TaskDetailResponse

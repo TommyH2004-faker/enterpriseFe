@@ -94,15 +94,9 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Nhãn',
-    to: '/labels',
-    icon: <CIcon icon={cilTags} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Thẻ',
-    to: '/tags',
-    icon: <CIcon icon={cilTags} customClassName="nav-icon" />,
+    name: 'Quản lý phiên',
+    to: '/sessions',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
@@ -116,12 +110,7 @@ const _nav = [
     to: '/audit',
     icon: <CIcon icon={cilShieldAlt} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'Tìm kiếm',
-    to: '/search',
-    icon: <CIcon icon={cilSearch} customClassName="nav-icon" />,
-  },
+ 
   {
     component: CNavItem,
     name: 'Thông báo',

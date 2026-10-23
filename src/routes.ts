@@ -29,14 +29,15 @@ const Notifications = React.lazy(() => import('./views/notifications/Notificatio
 const Messages = React.lazy(() => import('./views/messages/Messages'))
 const Reports = React.lazy(() => import('./views/reports/Reports'))
 const Settings = React.lazy(() => import('./views/settings/Settings'))
-const Activities = React.lazy(() => import('./views/activities/Activities'))
-const AuditLog = React.lazy(() => import('./views/audit/AuditLog'))
+const Activities = React.lazy(() => import('./views/activities/ActivityLogsPage'))
+const AuditLog = React.lazy(() => import('./views/audit/AuditLogsPage.tsx'))
 const SearchResults = React.lazy(() => import('./views/search/SearchResults'))
 const PositionRoleUser = React.lazy(() => import('./views/PositionPage/PositonRoleUser.tsx'))
 const RoleUser = React.lazy(() => import('./views/RolePage/RolePage.tsx'))
 const UserPage = React.lazy(() => import('./views/UserDetailPage/UserPage.tsx'))
 const PermissionPage = React.lazy(() => import('./views/PermissionPage/PermissionPage.tsx'))
-
+const ProfilePage = React.lazy(() => import('./views/pages/ProfilePage/ProfilePage.tsx'))
+const SessionManagementPage = React.lazy(() => import('./views/pages/SessionManagement/SessionManagementPage.tsx'))
 export const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
@@ -52,6 +53,8 @@ export const routes = [
   { path: '/notifications', name: 'Thông báo', element: Notifications },
   { path: '/messages', name: 'Tin nhắn', element: Messages },
   { path: '/reports', name: 'Báo cáo', element: Reports },
+  { path: '/sessions', name: 'Quản lý phiên', element: SessionManagementPage },
+  { path: '/profile', name: 'Hồ sơ', element: ProfilePage },
   {
     path: '/positionuser',
     name: 'Vai trò người dùng',
