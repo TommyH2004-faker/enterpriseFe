@@ -29,7 +29,7 @@ const Notifications = React.lazy(() => import('./views/notifications/Notificatio
 const Messages = React.lazy(() => import('./views/messages/Messages'))
 const Reports = React.lazy(() => import('./views/reports/Reports'))
 const Settings = React.lazy(() => import('./views/settings/Settings'))
-const Activities = React.lazy(() => import('./views/activities/Activities'))
+const Activities = React.lazy(() => import('./views/activities/Activities.tsx'))
 const AuditLog = React.lazy(() => import('./views/audit/AuditLog'))
 const SearchResults = React.lazy(() => import('./views/search/SearchResults'))
 const PositionRoleUser = React.lazy(() => import('./views/PositionPage/PositonRoleUser.tsx'))
