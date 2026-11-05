@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
   CButton,
-  CAlert,
   CCard,
   CCardBody,
   CForm,
@@ -27,6 +26,7 @@ import {
 import { authApi, getErrorMessage, getHttpErrorMessage } from 'src/api/authApi'
 import { authStorage } from 'src/services/authStorage'
 import toast from 'react-hot-toast'
+import ToastAlert from 'src/components/ToastAlert'
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
@@ -238,7 +238,7 @@ const Login: React.FC = () => {
             }}
           >
             <span className="me-3 fs-4">
-              🗂️
+              <CIcon icon={cilViewColumn} />
             </span>
 
             <div>
@@ -312,25 +312,13 @@ const Login: React.FC = () => {
             </div>
 
             {activationStatus === 'success' && (
-              <CAlert color="success" className="mb-4" role="alert">
-                <div className="fw-semibold">
-                  Kích hoạt tài khoản thành công
-                </div>
-                <div>
-                  Vui lòng đăng nhập để tiếp tục.
-                </div>
-              </CAlert>
+              <ToastAlert
+                message="Kích hoạt tài khoản thành công. Vui lòng đăng nhập để tiếp tục."
+                type="success"
+              />
             )}
-
             {activationStatus === 'error' && (
-              <CAlert color="danger" className="mb-4" role="alert">
-                <div className="fw-semibold">
-                  Kích hoạt thất bại
-                </div>
-                <div>
-                  Vui lòng kiểm tra lại liên kết hoặc thử lại sau.
-                </div>
-              </CAlert>
+              <ToastAlert message="Kích hoạt thất bại. Vui lòng kiểm tra lại liên kết hoặc thử lại sau." />
             )}
 
 

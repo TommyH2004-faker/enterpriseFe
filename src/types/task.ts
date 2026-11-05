@@ -91,10 +91,11 @@ export interface TaskDetailResponse {
   milestoneId: Guid | null
   title: string
   description: string
-  taskType: number
-  priority: number
-  status: number
+  taskType: string | number
+  priority: string | number
+  status: string | number
   reporterId: Guid
+  reporterName: string
   position: number
   progress: number
   storyPoint: number

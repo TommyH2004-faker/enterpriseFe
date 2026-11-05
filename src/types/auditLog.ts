@@ -1,20 +1,44 @@
 /** Các giá trị enum (module/action/entityType) là chuỗi trả về từ backend (tên enum C#). */
+/** Các giá trị enum là chuỗi trả về từ backend. */
 export interface AuditLogListItem {
   id: string
-  createdAt: string // UTC, ISO 8601 (có hậu tố Z)
-  actorId: string | null // null khi UserId = Guid.Empty (hệ thống)
-  actorName: string // "System" khi không có người thực hiện
+  createdAt: string
+
+  actorId: string | null
+  actorName: string
   actorCode?: string | null
   actorAvatarUrl?: string | null
-  module: string // AuditModule: HRM | ProjectManagement | Security | Authentication | System
-  entityType: string // AuditEntityType: User, Employee, Task, Role, Permission...
-  entityId: string // Guid
-  action: string // AuditAction: ChangeDepartment, AssignRole, ChangeDeadline...
+
+  module: string
+  entityType: string
+  entityId: string
+  action: string
   description: string
   ipAddress?: string | null
 }
+/** Response chi tiết nguyên bản từ API backend. */
+export interface AuditLogDetailResponse {
+  id: string
+  userId: string
+  userName: string | null
+  affectedUserId: string | null
+  affectedUserName: string | null
 
+  module: string
+  entityType: string
+  entityId: string
+  action: string
+  description: string
+
+  oldValues: string | null
+  newValues: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  correlationId: string | null
+  createdAt: string
+}
 export interface AuditLogDetail extends AuditLogListItem {
+  userName?: string | null
   userAgent?: string | null
   correlationId: string
   affectedUserId?: string | null

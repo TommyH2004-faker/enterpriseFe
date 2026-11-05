@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  CAlert,
   CButton,
   CFormInput,
   CFormLabel,
@@ -15,6 +14,7 @@ import {
 import { Position } from 'src/types/position'
 import { PositionFormState } from '../hooks/usePositionForm'
 import { FORM_LABELS, POSITION_MESSAGES } from '../contants/positionConstants'
+import ToastAlert from 'src/components/ToastAlert'
 
 
 interface PositionFormModalProps {
@@ -53,11 +53,7 @@ const PositionFormModal: React.FC<PositionFormModalProps> = ({
       </CModalHeader>
 
       <CModalBody className="p-4">
-        {formError && (
-          <CAlert color="danger">
-            {formError}
-          </CAlert>
-        )}
+        <ToastAlert message={formError} />
 
         {/* Code */}
         <div className="mb-3">

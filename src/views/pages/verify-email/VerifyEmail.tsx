@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { CAlert, CButton, CCard, CCardBody, CSpinner } from '@coreui/react'
+import { CButton, CCard, CCardBody, CSpinner } from '@coreui/react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi, getErrorMessage, getHttpErrorMessage } from '../../../api/authApi'
+import ToastAlert from 'src/components/ToastAlert'
 
 type VerificationState = 'loading' | 'error'
 
@@ -62,10 +63,7 @@ const VerifyEmail: React.FC = () => {
             </>
           ) : (
             <>
-              <CAlert color="danger" className="text-start mb-4" role="alert">
-                <div className="fw-semibold">Kích hoạt thất bại</div>
-                <div>{errorMessage}</div>
-              </CAlert>
+              <ToastAlert message={`Kích hoạt thất bại: ${errorMessage}`} />
               <Link to="/login" className="text-decoration-none">
               <CButton color="primary">
                 Quay lại đăng nhập

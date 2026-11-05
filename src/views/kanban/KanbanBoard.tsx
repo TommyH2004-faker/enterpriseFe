@@ -283,7 +283,6 @@
 import React, { useEffect, useState } from 'react'
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd'
 import {
-  CAlert,
   CButton,
   CCard,
   CCardBody,
@@ -306,6 +305,7 @@ import { CreateBoardModal } from './components/CreateBoardModal'
 import { KanbanColumnView } from './components/KanbanColumnView'
 
 import { ProjectMemberResponse, projectService } from 'src/services/projectService'
+import ToastAlert from 'src/components/ToastAlert'
 import { TaskDetailModal } from '../TaskDetail/components/TaskDetailModal'
 import labelService from 'src/services/labelService'
 import { KanbanTask } from 'src/types/KanbanType/kanban'
@@ -457,7 +457,7 @@ const KanbanBoard: React.FC = () => {
   }
 
   if (error || !project) {
-    return <CAlert color="danger">{error || 'Không tìm thấy thông tin dự án.'}</CAlert>
+    return <ToastAlert message={error || 'Không tìm thấy thông tin dự án.'} />
   }
 
   return (

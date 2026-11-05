@@ -1,7 +1,16 @@
-import { useEffect } from 'react'
+import { createElement, useEffect } from 'react'
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr'
 import { authStorage } from 'src/services/authStorage'
 import { NOTIFICATION_RECEIVED_EVENT, NOTIFICATION_RESYNC_EVENT, NotificationDto } from 'src/types/notifications'
+
+import toast from 'react-hot-toast'
+import CIcon from '@coreui/icons-react'
+import {
+  cilBell,
+  cilCommentSquare,
+  cilTask,
+  cilUserPlus,
+} from '@coreui/icons'
 
 // TODO: đúng đường dẫn MapHub<ChatHub>("...") trong Program.cs
 const HUB_PATH = '/hubs/chat'
@@ -19,6 +28,21 @@ export function useNotificationConnection() {
 
     connection.on('NotificationReceived', (n: NotificationDto) => {
       window.dispatchEvent(new CustomEvent(NOTIFICATION_RECEIVED_EVENT, { detail: n }))
+
+      const notificationIcon =
+        n.type === 'Assignment'
+          ? cilUserPlus
+          : n.type === 'Mention'
+            ? cilBell
+            : n.type === 'Comment'
+              ? cilCommentSquare
+              : cilTask
+
+      toast(`${n.title || 'Thông báo mới'}: ${n.content || ''}`, {
+        icon: createElement(CIcon, { icon: notificationIcon }),
+        duration: 5000,
+        position: 'top-right',
+      })
     })
 
     // Nối lại sau khi mất mạng: bù thông báo đã lỡ

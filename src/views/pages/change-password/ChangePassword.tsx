@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CAlert, CButton, CCard, CCardBody, CForm, CFormInput, CInputGroup, CInputGroupText, CSpinner } from '@coreui/react'
+import { CButton, CCard, CCardBody, CForm, CFormInput, CInputGroup, CInputGroupText, CSpinner } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { authApi, getErrorMessage, getHttpErrorMessage } from '../../../api/authApi'
 import { authStorage } from '../../../services/authStorage'
+import ToastAlert from 'src/components/ToastAlert'
 
 const ChangePassword: React.FC = () => {
   const navigate = useNavigate()
@@ -67,7 +68,7 @@ const ChangePassword: React.FC = () => {
             Đây là lần đăng nhập đầu tiên. Vui lòng tạo mật khẩu mới để tiếp tục.
           </p>
 
-          {error && <CAlert color="danger" role="alert">{error}</CAlert>}
+          <ToastAlert message={error} />
 
           <CForm onSubmit={handleSubmit} noValidate>
             <div className="mb-3">

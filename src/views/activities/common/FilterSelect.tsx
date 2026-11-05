@@ -1,5 +1,6 @@
 import { CFormSelect } from '@coreui/react'
-import { SelectOption } from 'src/types/common'
+import { SelectOption } from 'src/types/activityLog'
+
 
 interface Props {
   value: string

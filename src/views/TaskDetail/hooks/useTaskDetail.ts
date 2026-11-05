@@ -180,10 +180,16 @@ export function useTaskDetail({
     setError(null)
     try {
       await action()
-    } catch (err) {
+      return true
+    } catch (err: any) {
       console.error('Task detail action failed:', err)
-      setError('Thao tác không thành công. Vui lòng thử lại.')
-      throw err
+      setError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error?.description ||
+          err?.message ||
+          'Thao tác không thành công. Vui lòng thử lại.',
+      )
+      return false
     } finally {
       setActionLoading(false)
     }
@@ -234,8 +240,14 @@ export function useTaskDetail({
   const createChecklist = useCallback(
     async (title: string) => {
       if (!taskId) return
+      const normalizedTitle = title.trim()
+      if (!normalizedTitle) {
+        setError('Tên checklist không được để trống.')
+        return
+      }
+
       await runAction(async () => {
-        await checklistService.createChecklist(taskId, { title })
+        await checklistService.createChecklist(taskId, { title: normalizedTitle })
         const checklists = await checklistService.getTaskChecklists(taskId)
         setState((current) => ({ ...current, checklists }))
         await notifyChanged()
@@ -246,8 +258,14 @@ export function useTaskDetail({
 
   const updateChecklist = useCallback(
     async (id: string, title: string) => {
+      const normalizedTitle = title.trim()
+      if (!normalizedTitle) {
+        setError('Tên checklist không được để trống.')
+        return
+      }
+
       await runAction(async () => {
-        await checklistService.updateChecklist(id, { title })
+        await checklistService.updateChecklist(id, { title: normalizedTitle })
         if (taskId) {
           const checklists = await checklistService.getTaskChecklists(taskId)
           setState((current) => ({ ...current, checklists }))
@@ -286,8 +304,17 @@ export function useTaskDetail({
 
   const createChecklistItem = useCallback(
     async (checklistId: string, content: string, orderIndex: number) => {
+      const normalizedContent = content.trim()
+      if (!normalizedContent) {
+        setError('Nội dung mục checklist không được để trống.')
+        return
+      }
+
       await runAction(async () => {
-        await checklistService.createChecklistItem(checklistId, { content, orderIndex })
+        await checklistService.createChecklistItem(checklistId, {
+          content: normalizedContent,
+          orderIndex,
+        })
         if (taskId) {
           const checklists = await checklistService.getTaskChecklists(taskId)
           setState((current) => ({ ...current, checklists }))
@@ -299,8 +326,14 @@ export function useTaskDetail({
 
   const updateChecklistItem = useCallback(
     async (id: string, content: string) => {
+      const normalizedContent = content.trim()
+      if (!normalizedContent) {
+        setError('Nội dung mục checklist không được để trống.')
+        return
+      }
+
       await runAction(async () => {
-        await checklistService.updateChecklistItem(id, { content })
+        await checklistService.updateChecklistItem(id, { content: normalizedContent })
         if (taskId) {
           const checklists = await checklistService.getTaskChecklists(taskId)
           setState((current) => ({ ...current, checklists }))
@@ -351,10 +384,13 @@ export function useTaskDetail({
   )
 
   const createComment = useCallback(
-    async (content: string) => {
+    async (content: string, parentCommentId?: string) => {
       if (!taskId) return
       await runAction(async () => {
-        await commentService.createComment(taskId, { content })
+        await commentService.createComment(taskId, {
+          content,
+          parentCommentId: parentCommentId ?? null,
+        })
         const comments = await commentService.getTaskComments(taskId)
         setState((current) => ({ ...current, comments }))
       })

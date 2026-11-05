@@ -959,7 +959,7 @@ const ProjectMembers: React.FC = () => {
                               </div>
 
                               <div className="small text-body-secondary">
-                                Thành viên dự án
+                                Thành viên dự án 
                               </div>
                             </div>
                           </div>

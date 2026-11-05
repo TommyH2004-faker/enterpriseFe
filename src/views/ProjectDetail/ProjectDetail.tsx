@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  CAlert,
   CCard,
   CCardBody,
   CSpinner,
@@ -26,6 +25,8 @@ import type {
   ProjectPriorityLabel,
 } from 'src/types/ProjectType/project'
 import toast from 'react-hot-toast'
+import { useProjectPermissions } from '../projects/hooks/useProjectPermissions'
+import ToastAlert from 'src/components/ToastAlert'
 
 /**
  * Project priority:
@@ -107,6 +108,7 @@ const ProjectDetailInner: React.FC<{
     useState<Record<string, string>>({})
 
   const actions = useProjectActions()
+  const permissions = useProjectPermissions()
 
   // =========================================================
   // Loading
@@ -131,11 +133,7 @@ const ProjectDetailInner: React.FC<{
   // =========================================================
 
   if (error || !project) {
-    return (
-      <CAlert color="danger">
-        {error || 'Không tìm thấy dự án.'}
-      </CAlert>
-    )
+    return <ToastAlert message={error || 'Không tìm thấy dự án.'} />
   }
 
   // =========================================================
@@ -155,6 +153,11 @@ const ProjectDetailInner: React.FC<{
   // =========================================================
 
   const handleEditOpen = () => {
+    if (!permissions.can(project, 'edit')) {
+      toast.error(permissions.getDeniedMessage(project))
+      return
+    }
+
     setEditName(project.name || '')
 
     setEditDesc(project.description || '')
@@ -256,6 +259,12 @@ const ProjectDetailInner: React.FC<{
   // =========================================================
 
   const handleDeleteConfirm = async () => {
+    if (!permissions.can(project, 'delete')) {
+      setShowDeleteModal(false)
+      toast.error(permissions.getDeniedMessage(project))
+      return
+    }
+
     const result =
       await actions.deleteProject(project.id)
 
@@ -398,11 +407,7 @@ const ProjectDetail: React.FC = () => {
     useParams<{ projectId: string }>()
 
   if (!projectId) {
-    return (
-      <CAlert color="danger">
-        Không tìm thấy projectId.
-      </CAlert>
-    )
+    return <ToastAlert message="Không tìm thấy projectId." />
   }
 
   return (

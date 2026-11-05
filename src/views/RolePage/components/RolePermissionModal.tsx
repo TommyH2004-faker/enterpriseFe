@@ -1,7 +1,6 @@
 
 import React, { useEffect, useMemo, useRef } from 'react'
 import {
-  CAlert,
   CBadge,
   CButton,
   CFormCheck,
@@ -22,6 +21,7 @@ import {
 
 import type { Role } from 'src/types/role'
 import type { Permission } from 'src/types/permission'
+import ToastAlert from 'src/components/ToastAlert'
 
 import { useRolePermission } from '../hooks/useRolePermission'
 import toast from 'react-hot-toast'
@@ -182,14 +182,7 @@ const RolePermissionModal: React.FC<
           overflowY: 'auto',
         }}
       >
-        {error && (
-          <CAlert
-            color="danger"
-            className="mb-3"
-          >
-            {error}
-          </CAlert>
-        )}
+        <ToastAlert message={error} />
 
         {/* Toolbar */}
         <div className="d-flex flex-column flex-md-row gap-2 mb-3">
@@ -459,4 +452,3 @@ const RolePermissionModal: React.FC<
 }
 
 export default RolePermissionModal
-

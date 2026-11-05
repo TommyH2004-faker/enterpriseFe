@@ -227,7 +227,7 @@ export const KanbanTaskCard: React.FC<KanbanTaskCardProps> = ({
                 lineHeight: 1.4,
               }}
             >
-              {task.title}
+              Tên công việc :{task.title}
             </h6>
 
             {/* Description */}
@@ -242,10 +242,19 @@ export const KanbanTaskCard: React.FC<KanbanTaskCardProps> = ({
                   lineHeight: 1.4,
                 }}
               >
-                {task.description}
+                Mô tả : {task.description}
               </p>
             )}
+            {/* Người tạo task */}
+            <div className="d-flex align-items-center gap-2 mt-2">
+              <span className="text-muted small">
+                Người tạo:
+              </span>
 
+              <span className="text-dark small fw-semibold">
+                {task.reporterName || 'Không xác định'}
+              </span>
+            </div>
             {/* Footer Metadata */}
             <div className="d-flex justify-content-between align-items-center text-muted small pt-2 border-top mt-2">
 

@@ -22,6 +22,8 @@ import PermissionFormModal from './components/PermissionFormModal'
 import { Permission } from 'src/types/permission'
 import { usePermission } from './hooks/usePermission'
 import { usePermissionForm } from './hooks/usePermissionForm'
+import toast from 'react-hot-toast'
+import ToastAlert from 'src/components/ToastAlert'
 
 const PermissionPage: React.FC = () => {
   const {
@@ -70,7 +72,7 @@ const PermissionPage: React.FC = () => {
 
       setDeleteTarget(null)
     } catch (error: any) {
-      alert(
+      toast.error(
         error?.response?.data?.message ??
           'Không thể xóa permission.',
       )
@@ -145,11 +147,7 @@ const PermissionPage: React.FC = () => {
                 </span>
               </div>
 
-              {error && (
-                <div className="alert alert-danger">
-                  {error}
-                </div>
-              )}
+              <ToastAlert message={error} />
 
               <PermissionTable
                 permissions={permissions}

@@ -738,7 +738,12 @@ const deleteTask = async (taskId: string) => {
       }
     })
   } catch (error) {
-    console.error('Lỗi khi xóa task:', error)
+    const message =
+      (error as any)?.response?.data?.message ||
+      (error as any)?.response?.data?.error?.description ||
+      (error as any)?.message ||
+      'Không thể xóa công việc.'
+    toast.error(message)
   }
 }
 

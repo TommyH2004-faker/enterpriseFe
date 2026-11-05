@@ -1,0 +1,212 @@
+/* Notifications Center Styles */
+
+.notification-center {
+  min-height: 100%;
+}
+
+/* Stat Cards */
+.notif-stat-card {
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-coreui-theme='dark'] .notif-stat-card {
+  background: #212631;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.notif-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+}
+
+.notif-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+/* Tab Navigation */
+.notif-nav-pills {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 6px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+[data-coreui-theme='dark'] .notif-nav-pills {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.notif-nav-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-coreui-theme='dark'] .notif-nav-btn {
+  color: #94a3b8;
+}
+
+.notif-nav-btn:hover {
+  color: #1e293b;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-coreui-theme='dark'] .notif-nav-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.notif-nav-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-coreui-theme='dark'] .notif-nav-btn.active {
+  background: #2b303c;
+  color: #60a5fa;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Notification Items */
+.notif-item-card {
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  cursor: pointer;
+}
+
+[data-coreui-theme='dark'] .notif-item-card {
+  background: #212631;
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.notif-item-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+}
+
+[data-coreui-theme='dark'] .notif-item-card:hover {
+  border-color: #475569;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.notif-item-card.unread {
+  background: #f8fafc;
+  border-left: 4px solid #2563eb;
+}
+
+[data-coreui-theme='dark'] .notif-item-card.unread {
+  background: #1e2532;
+  border-left: 4px solid #3b82f6;
+}
+
+.notif-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.notif-avatar-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-coreui-theme='dark'] .notif-avatar-badge {
+  background: #212631;
+  border-color: #212631;
+}
+
+.notif-unread-glow {
+  width: 9px;
+  height: 9px;
+  background: #2563eb;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+  flex-shrink: 0;
+}
+
+.notif-action-btn {
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.notif-action-btn:hover {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+/* Empty State */
+.notif-empty-container {
+  padding: 64px 20px;
+  text-align: center;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+}
+
+[data-coreui-theme='dark'] .notif-empty-container {
+  background: #1b2028;
+  border-color: #334155;
+}
+
+.notif-empty-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  background: #e2e8f0;
+}
+
+[data-coreui-theme='dark'] .notif-empty-icon {
+  background: #28303e;
+}

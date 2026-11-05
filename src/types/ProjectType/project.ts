@@ -8,6 +8,7 @@ export type ProjectStatus =
   | 'OnHold'
   | 'Completed'
   | 'Cancelled'
+
 export type ProjectPriority = 1 | 2 | 3 | 4
 
 export type ProjectPriorityLabel =
@@ -58,6 +59,7 @@ export interface ProjectSummary {
   updatedAt?: string | null
 
   isActive?: boolean
+  allowedActions?: string[]
 }
 
 export interface ProjectListData {

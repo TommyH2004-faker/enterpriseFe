@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  CAlert,
   CButton,
   CForm,
   CFormInput,
@@ -18,6 +17,7 @@ import { cilCheck } from '@coreui/icons'
 import type { Role } from 'src/types/role'
 import { ROLE_MESSAGES, ROLE_VALIDATION } from '../contants/RoleConstants'
 import CIcon from '@coreui/icons-react'
+import ToastAlert from 'src/components/ToastAlert'
 
 
 interface RoleFormModalProps {
@@ -65,11 +65,7 @@ const RoleFormModal: React.FC<RoleFormModalProps> = ({
         </CModalHeader>
 
         <CModalBody>
-          {error && (
-            <CAlert color="danger" className="mb-3">
-              {error}
-            </CAlert>
-          )}
+          <ToastAlert message={error} />
 
           {/* CODE */}
           <div className="mb-3">

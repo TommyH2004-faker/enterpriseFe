@@ -10,7 +10,10 @@ export const ActivitySection: React.FC<ActivitySectionProps> = ({ activities }) 
     <h6 className="fw-bold mb-3 text-dark d-flex align-items-center">
       <CIcon icon={cilHistory} className="me-2 text-muted" /> Lịch sử hoạt động
     </h6>
-    <div className="border-start border-2 ms-2 ps-3 py-1">
+    <div
+      className="border-start border-2 ms-2 ps-3 py-1"
+      style={{ maxHeight: 320, overflowY: 'auto', overflowX: 'hidden' }}
+    >
       {activities.map((log) => (
         <div key={log.id} className="mb-3 position-relative">
           <div className="position-absolute bg-primary rounded-circle" style={{ width: 8, height: 8, left: -21, top: 6 }} />

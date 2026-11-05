@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { CAlert } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilChatBubble } from '@coreui/icons'
 import {
@@ -19,6 +18,7 @@ import MessageList from './Components/MessageList'
 import { initialOf } from './utils/utils'
 import CreateGroupModal from './Components/CreateGroupModal'
 import ConfirmDeleteModal from './Components/ConfirmDeleteModal'
+import ToastAlert from 'src/components/ToastAlert'
 
 const Messages: React.FC = () => {
   const chat = useChat()
@@ -102,11 +102,7 @@ console.log('[Current user]', chat.currentUserId)
       </ConversationList>
 
       <main className="chat-thread">
-        {chat.error && (
-          <CAlert color="danger" className="m-3">
-            {chat.error}
-          </CAlert>
-        )}
+        <ToastAlert message={chat.error} />
 
         {!active ? (
           <div className="thread-placeholder">

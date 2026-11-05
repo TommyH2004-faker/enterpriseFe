@@ -8,7 +8,7 @@ export function parseUtc(iso: string): Date {
   const hasTz = /(Z|[+-]\d{2}:?\d{2})$/i.test(iso)
   return new Date(hasTz ? iso : `${iso}Z`)
 }
-
+export const toParam = (v?: string | null) => (v ? v : undefined)
 export function formatDateTime(iso: string, withSeconds = true): string {
   const d = parseUtc(iso)
   if (Number.isNaN(d.getTime())) return iso
@@ -42,15 +42,22 @@ export function endOfDayUtc(date?: string): string | undefined {
   return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString()
 }
 
-export function getInitials(name: string): string {
-  return name
-    .trim()
+
+export function getInitials(name?: string | null): string {
+  const normalizedName = typeof name === 'string' ? name.trim() : '';
+
+  if (!normalizedName) {
+    return '?';
+  }
+
+  return normalizedName
     .split(/\s+/)
     .slice(-2)
-    .map((w) => w[0])
+    .map((word) => word[0])
     .join('')
-    .toUpperCase()
+    .toUpperCase();
 }
+
 
 export function formatNumber(value?: number): string {
   return value === undefined ? '—' : value.toLocaleString('en-US')
@@ -76,9 +83,21 @@ export function shortId(id?: string | null): string {
 }
 
 /** "ChangeDepartment" -> "Change Department" */
-export function humanize(value: string): string {
-  return value.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-}
+
+export const humanize = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') {
+    return '—';
+  }
+
+  const text = String(value);
+
+  return text
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 
 export function toOptions(values: string[] = []): SelectOption[] {
   return values.map((v) => ({ value: v, label: humanize(v) }))

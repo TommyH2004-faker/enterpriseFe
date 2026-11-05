@@ -15,8 +15,8 @@ const HEADS = ['Thời gian', 'Nhân viên', 'Loại hoạt động', 'Nội dun
 
 export default function ActivityTable({ items, loading }: Props) {
   return (
-    <CTable align="middle" hover responsive className="mb-0">
-      <CTableHead color="light">
+    <CTable align="middle" hover responsive className="mb-0 border">
+      <CTableHead color="light text-nowrap">
         <CTableRow>
           {HEADS.map((h) => (
             <CTableHeaderCell key={h}>{h}</CTableHeaderCell>
@@ -28,17 +28,22 @@ export default function ActivityTable({ items, loading }: Props) {
           items.map((r) => (
             <CTableRow key={r.id}>
               <CTableDataCell className="text-nowrap">{formatDateTime(r.createdAt, false)}</CTableDataCell>
-              <CTableDataCell>
+              <CTableDataCell className="text-nowrap">
                 <ActorCell name={r.employeeName} code={r.employeeCode} avatarUrl={r.avatarUrl} />
               </CTableDataCell>
-              <CTableDataCell>
+              <CTableDataCell className="text-nowrap">
                 <ActivityTypeCell type={r.activityType} />
               </CTableDataCell>
-              <CTableDataCell style={{ maxWidth: 380 }}>
-                <div className="fw-semibold">{r.title}</div>
-                <small className="text-body-secondary">{r.description}</small>
+              
+              {/* Thêm max-width và text-truncate để nội dung không đẩy bảng phình to */}
+              <CTableDataCell style={{ maxWidth: '300px' }}>
+                <div className="fw-semibold text-truncate" title={r.title}>{r.title}</div>
+                <small className="text-body-secondary text-truncate d-block" title={r.description}>
+                  {r.description}
+                </small>
               </CTableDataCell>
-              <CTableDataCell>
+              
+              <CTableDataCell className="text-nowrap">
                 <small className="text-body-secondary" title={r.entityId}>
                   {shortId(r.entityId)}
                 </small>

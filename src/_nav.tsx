@@ -116,22 +116,12 @@ const _nav = [
     name: 'Thông báo',
     to: '/notifications',
     icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
-    badge: {
-      color: 'danger',
-      text: '3',
-    },
   },
   {
     component: CNavItem,
     name: 'Báo cáo',
     to: '/reports',
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Cài đặt',
-    to: '/settings',
-    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
   },
 ]
 

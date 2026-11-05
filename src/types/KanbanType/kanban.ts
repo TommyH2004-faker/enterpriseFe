@@ -36,6 +36,8 @@ export interface KanbanTask {
   columnId: string
   title: string
   description: string
+  reporterId?: string | null
+  reporterName?: string | null
   priority: 'Low' | 'Medium' | 'High'
   position: number
   assignees: KanbanUser[]

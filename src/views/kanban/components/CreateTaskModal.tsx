@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
 import {
-  CAlert,
   CButton,
   CFormCheck,
   CFormInput,
@@ -17,6 +16,7 @@ import {
 
 import { KanbanColumn } from 'src/types/KanbanType/kanban'
 import { ProjectMemberResponse, projectService } from 'src/services/projectService'
+import ToastAlert from 'src/components/ToastAlert'
 
 export interface TaskMemberOption {
   id: string
@@ -316,11 +316,7 @@ export const CreateTaskModal: React.FC<
 
       <form onSubmit={handleSubmit}>
         <CModalBody className="p-4">
-          {error && (
-            <CAlert color="danger">
-              {error}
-            </CAlert>
-          )}
+          <ToastAlert message={error} />
 
           {/* ========================= */}
           {/* COLUMN */}

@@ -1,23 +1,42 @@
-import { ReactNode } from 'react'
-import { CAlert, CButton, CCard, CCardBody, CCardHeader, CCol, CRow, CSpinner } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilX } from '@coreui/icons'
+import type { ReactNode } from 'react'
+import {
+  CCol,
+  CModal,
+  CModalBody,
+  CModalHeader,
+  CModalTitle,
+  CRow,
+  CSpinner,
+} from '@coreui/react'
 
 import auditLogService from 'src/services/auditLogService'
-import { formatDateTime, humanize, prettyJson } from 'src/views/activities/utils/logHelpers'
+import {
+  formatDateTime,
+  humanize,
+  prettyJson,
+} from 'src/views/activities/utils/logHelpers'
 import { useAsync } from 'src/views/activities/hooks/useAsync'
 import { ActionBadge } from 'src/views/activities/common/Badges'
-
+import ToastAlert from 'src/components/ToastAlert'
 
 interface Props {
   logId: string
   onClose: () => void
 }
 
-function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+function InfoRow({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
   return (
-    <div className="d-flex gap-2 py-1 small">
-      <span className="text-body-secondary flex-shrink-0" style={{ width: 110 }}>
+    <div className="d-flex gap-2 py-2 small border-bottom">
+      <span
+        className="text-body-secondary flex-shrink-0"
+        style={{ width: 140 }}
+      >
         {label}
       </span>
       <span className="text-break">{children}</span>
@@ -25,84 +44,163 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function ValueBox({ title, json }: { title: string; json: string | null }) {
+function ValueBox({
+  title,
+  json,
+}: {
+  title: string
+  json: string | null
+}) {
   const text = prettyJson(json)
+
   return (
-    <div className="bg-body-tertiary rounded p-2 h-100" style={{ minHeight: 150 }}>
+    <div
+      className="bg-body-tertiary rounded p-3 h-100"
+      style={{ minHeight: 150 }}
+    >
       <div className="small fw-semibold mb-2">{title}</div>
+
       {text ? (
-        <pre className="small mb-0" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        <pre
+          className="small mb-0"
+          style={{
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            maxHeight: 280,
+            overflowY: 'auto',
+          }}
+        >
           {text}
         </pre>
       ) : (
-        <div className="small text-body-secondary">Không có dữ liệu</div>
+        <div className="small text-body-secondary">
+          Không có dữ liệu
+        </div>
       )}
     </div>
   )
 }
 
 export default function AuditDetailPanel({ logId, onClose }: Props) {
-  const { data: log, loading, error } = useAsync(() => auditLogService.getAuditLogDetail(logId), [logId])
+  const {
+    data: log,
+    loading,
+    error,
+  } = useAsync(
+    () => auditLogService.getAuditLogDetail(logId),
+    [logId],
+  )
 
   return (
-    <CCard className="flex-shrink-0" style={{ width: 340 }}>
-      <CCardHeader className="d-flex justify-content-between align-items-center">
-        <strong>Chi tiết nhật ký kiểm toán</strong>
-        <CButton color="link" className="p-0 text-body-secondary" onClick={onClose} aria-label="Đóng">
-          <CIcon icon={cilX} />
-        </CButton>
-      </CCardHeader>
+    <CModal
+      visible
+      onClose={onClose}
+      alignment="center"
+      size="xl"
+      scrollable
+      backdrop="static"
+      aria-labelledby="audit-detail-modal-title"
+    >
+      <CModalHeader>
+        <CModalTitle id="audit-detail-modal-title">
+          Chi tiết nhật ký kiểm toán
+        </CModalTitle>
+      </CModalHeader>
 
-      <CCardBody>
+      <CModalBody>
         {loading && (
           <div className="text-center py-5">
-            <CSpinner size="sm" />
+            <CSpinner />
+            <div className="small text-body-secondary mt-2">
+              Đang tải chi tiết nhật ký...
+            </div>
           </div>
         )}
-        {error && <CAlert color="danger">{error}</CAlert>}
 
-        {!loading && log && (
+        <ToastAlert message={error} />
+
+        {!loading && !error && log && (
           <>
-            <div className="d-flex align-items-center gap-2 small text-body-secondary mb-3">
+            <div className="d-flex flex-wrap align-items-center gap-2 text-body-secondary mb-4">
               <ActionBadge action={log.action} />
-              <span>
-                {formatDateTime(log.createdAt)} · {log.actorName}
+
+              <span className="small">
+                {formatDateTime(log.createdAt)}
+              </span>
+
+              <span className="small">·</span>
+
+              <span className="small">
+                {log.actorName || 'Không xác định'}
               </span>
             </div>
 
-            <h6 className="fw-semibold">Thông tin chung</h6>
-            <div className="border-bottom pb-2 mb-3">
-              <InfoRow label="Hành động">{humanize(log.action)}</InfoRow>
-              <InfoRow label="Module">{humanize(log.module)}</InfoRow>
-              <InfoRow label="Đối tượng">{humanize(log.entityType)}</InfoRow>
-              <InfoRow label="Entity Id">{log.entityId}</InfoRow>
+            <h6 className="fw-semibold mb-3">
+              Thông tin chung
+            </h6>
+
+            <div className="mb-4">
+              <InfoRow label="Hành động">
+                {humanize(log.action)}
+              </InfoRow>
+
+              <InfoRow label="Module">
+                {humanize(log.module)}
+              </InfoRow>
+
+              <InfoRow label="Đối tượng">
+                {humanize(log.entityType)}
+              </InfoRow>
+
+              <InfoRow label="Entity ID">
+                {log.entityId || '-'}
+              </InfoRow>
+
               <InfoRow label="Người thực hiện">
-                {log.actorName}
+                {log.actorName || 'Không xác định'}
                 {log.actorCode ? ` (${log.actorCode})` : ''}
               </InfoRow>
-              {log.affectedUserId && (
-                <InfoRow label="Người bị tác động">{log.affectedUserName ?? log.affectedUserId}</InfoRow>
-              )}
-              <InfoRow label="IP Address">{log.ipAddress ?? '-'}</InfoRow>
-              <InfoRow label="User Agent">{log.userAgent ?? '-'}</InfoRow>
-              <InfoRow label="Correlation Id">{log.correlationId}</InfoRow>
+                <InfoRow label="User Agent">
+                  {log.userAgent || '-'}
+                </InfoRow>
+              
+              <InfoRow label="IP Address">
+                {log.ipAddress || '-'}
+              </InfoRow>
+
+             
+
+             
             </div>
 
-            <h6 className="fw-semibold">Dữ liệu thay đổi</h6>
-            <CRow className="g-2 mb-3">
-              <CCol xs={6}>
-                <ValueBox title="Old Values" json={log.oldValues} />
+            <h6 className="fw-semibold mb-3">
+              Dữ liệu thay đổi
+            </h6>
+
+            <CRow className="g-3 mb-4">
+              <CCol xs={12} md={6}>
+                <ValueBox
+                  title="Old Values"
+                  json={log.oldValues}
+                />
               </CCol>
-              <CCol xs={6}>
-                <ValueBox title="New Values" json={log.newValues} />
+
+              <CCol xs={12} md={6}>
+                <ValueBox
+                  title="New Values"
+                  json={log.newValues}
+                />
               </CCol>
             </CRow>
 
-            <h6 className="fw-semibold">Mô tả</h6>
-            <p className="small text-body-secondary mb-0">{log.description}</p>
+            <h6 className="fw-semibold mb-2">Mô tả</h6>
+
+            <p className="small mb-0 text-body-secondary text-break">
+              {log.description || '-'}
+            </p>
           </>
         )}
-      </CCardBody>
-    </CCard>
+      </CModalBody>
+    </CModal>
   )
 }

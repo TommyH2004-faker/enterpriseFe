@@ -23,7 +23,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
-import { cilLockLocked, cilUser, cilBell, cilMonitor, cilHistory, cilShieldAlt } from '@coreui/icons'
+import { cilLockLocked, cilUser, cilBell, cilMonitor, cilHistory, cilShieldAlt, cilSun, cilMoon } from '@coreui/icons'
 import toast from 'react-hot-toast'
 
 interface LoginEntry {
@@ -229,13 +229,13 @@ const Settings: React.FC = () => {
                   <CFormLabel className="fw-semibold text-dark mb-2 d-block" style={{ fontSize: '13px' }}>Chế độ hiển thị (Theme)</CFormLabel>
                   <div className="d-flex gap-3 flex-wrap">
                     {[
-                      { id: 'light', label: '☀️ Sáng', desc: 'Light Mode' },
-                      { id: 'dark', label: '🌙 Tối', desc: 'Dark Mode' },
-                      { id: 'auto', label: '🖥️ Hệ thống', desc: 'Auto' },
+                      { id: 'light', icon: cilSun, desc: 'Light Mode' },
+                      { id: 'dark', icon: cilMoon, desc: 'Dark Mode' },
+                      { id: 'auto', icon: cilMonitor, desc: 'Auto' },
                     ].map(t => (
                       <label key={t.id} className="border rounded-2 p-3 cursor-pointer text-center" style={{ minWidth: '80px', transition: 'all 0.15s ease' }}>
                         <CFormCheck type="radio" name="theme" id={t.id} className="d-none" />
-                        <div style={{ fontSize: '20px', marginBottom: '4px' }}>{t.label.split(' ')[0]}</div>
+                        <div style={{ fontSize: '20px', marginBottom: '4px' }}><CIcon icon={t.icon} /></div>
                         <div style={{ fontSize: '11px', fontWeight: 500 }}>{t.desc}</div>
                       </label>
                     ))}

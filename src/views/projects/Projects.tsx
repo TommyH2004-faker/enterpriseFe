@@ -7,7 +7,6 @@ import React, {
 } from 'react'
 
 import {
-  CAlert,
   CButton,
   CCard,
   CCardBody,
@@ -45,6 +44,9 @@ import { ProjectFilter, ProjectOption, ProjectSummary } from 'src/types/ProjectT
 import { departmentService } from 'src/services/departmentService'
 import { employeeService } from 'src/services/employeeService'
 import { EmployeeResponse } from 'src/types/Employee'
+import toast from 'react-hot-toast'
+import ToastAlert from 'src/components/ToastAlert'
+import { useProjectPermissions } from './hooks/useProjectPermissions'
 
 const DEFAULT_FILTERS: ProjectFilter = {
   page: 1,
@@ -132,6 +134,7 @@ const Projects: React.FC = () => {
     })
 
   const actions =useProjectActions()
+  const permissions = useProjectPermissions()
   const [projectMembers, setProjectMembers] =useState<EmployeeResponse[]>([])
   const [departments, setDepartments] = useState<ProjectOption[]>([])
   const [employees, setEmployees] = useState<EmployeeResponse[]>([])
@@ -273,6 +276,19 @@ const Projects: React.FC = () => {
     )
   }
 
+  const runProjectPermission = (
+    project: ProjectSummary,
+    permission: Parameters<typeof permissions.can>[1],
+    action: () => void,
+  ) => {
+    if (permissions.can(project, permission)) {
+      action()
+      return
+    }
+
+    toast.error(permissions.getDeniedMessage(project))
+  }
+
   const handleCreate = async () => {
     if (
       !createForm.validate(true)
@@ -409,23 +425,8 @@ const Projects: React.FC = () => {
         </div>
       </div>
 
-      {actionMessage && (
-        <CAlert
-          color="info"
-          dismissible
-          onClose={() =>
-            setActionMessage(null)
-          }
-        >
-          {actionMessage}
-        </CAlert>
-      )}
-
-      {error && (
-        <CAlert color="danger">
-          {error}
-        </CAlert>
-      )}
+      <ToastAlert message={actionMessage} type="success" />
+      <ToastAlert message={error} />
 
       <ProjectToolbar
         search={
@@ -470,10 +471,19 @@ const Projects: React.FC = () => {
         <ProjectGrid
           projects={data.items}
           onOpen={openDetail}
-          onEdit={(proj) => setEditingProject(proj)}
+          onEdit={(proj) => {
+            runProjectPermission(proj, 'edit', () => setEditingProject(proj))
+          }}
           onStatus={(proj) => setStatusProject(proj)}
-          onSettings={(id) => navigate(`/projects/${id}/settings`)}
-          onDelete={(proj) => setDeletingProject(proj)}
+          onSettings={(id) => {
+            const project = data.items.find((item) => item.id === id)
+            if (project) {
+              runProjectPermission(project, 'settings', () => navigate(`/projects/${id}/settings`))
+            }
+          }}
+          onDelete={(proj) => {
+            runProjectPermission(proj, 'delete', () => setDeletingProject(proj))
+          }}
           onOpenKanban={openKanban}
         />
       ) : (
@@ -482,10 +492,19 @@ const Projects: React.FC = () => {
             <ProjectList
               projects={data.items}
               onOpen={openDetail}
-              onEdit={(proj) => setEditingProject(proj)}
+              onEdit={(proj) => {
+                runProjectPermission(proj, 'edit', () => setEditingProject(proj))
+              }}
               onStatus={(proj) => setStatusProject(proj)}
-              onSettings={(id) => navigate(`/projects/${id}/settings`)}
-              onDelete={(proj) => setDeletingProject(proj)}
+              onSettings={(id) => {
+                const project = data.items.find((item) => item.id === id)
+                if (project) {
+                  runProjectPermission(project, 'settings', () => navigate(`/projects/${id}/settings`))
+                }
+              }}
+              onDelete={(proj) => {
+                runProjectPermission(proj, 'delete', () => setDeletingProject(proj))
+              }}
             />
           </CCardBody>
         </CCard>
@@ -569,7 +588,7 @@ const Projects: React.FC = () => {
         projectName={statusProject?.name ?? ''}
         projectCode={statusProject?.code ?? ''}
         currentStatus={statusProject?.status ?? 'Planning'}
-        isActive={statusProject?.isActive}
+        progress={statusProject?.progress ?? 0}
         loading={actions.loading}
         onClose={() => setStatusProject(null)}
         onStart={() =>
@@ -587,11 +606,8 @@ const Projects: React.FC = () => {
         onCancel={() =>
           runStatusAction(() => actions.cancel(statusProject!.id))
         }
-        onActivate={() =>
-          runStatusAction(() => actions.activate(statusProject!.id))
-        }
-        onDeactivate={() =>
-          runStatusAction(() => actions.deactivate(statusProject!.id))
+        onReopen={() =>
+          runStatusAction(() => actions.reopen(statusProject!.id))
         }
       />
     </div>

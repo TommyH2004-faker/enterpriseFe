@@ -71,32 +71,9 @@ const ProjectCardMenu: React.FC<Props> = ({
           </CDropdownItem>
         )}
 
-        {canUpdate && (
-          <CDropdownItem
-            onClick={onSettings}
-          >
-            <CIcon
-              icon={cilSettings}
-              className="me-2"
-            />
-            Cài đặt dự án
-          </CDropdownItem>
-        )}
+
 
         <CDropdownDivider />
-
-        {canDelete && (
-          <CDropdownItem
-            className="text-danger"
-            onClick={onDelete}
-          >
-            <CIcon
-              icon={cilTrash}
-              className="me-2"
-            />
-            Xóa dự án
-          </CDropdownItem>
-        )}
       </CDropdownMenu>
     </CDropdown>
   )

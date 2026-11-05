@@ -2,26 +2,26 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CBadge, CDropdown, CDropdownMenu, CDropdownToggle } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilBell } from '@coreui/icons'
+import { cilBell, cilVolumeHigh, cilVolumeOff } from '@coreui/icons'
 import {
   NOTIFICATION_RECEIVED_EVENT,
   NOTIFICATION_RESYNC_EVENT,
   NotificationDto,
   NotificationKind,
   UnreadCount,
-  kindOf,
-  notificationService,
+  kindOf
 } from 'src/types/notifications'
 import './AppHeaderNotifications.css'
 import { isSoundEnabled, playNotificationSound, setSoundEnabled, unlockNotificationSound } from 'src/utils/notificationSound'
+import { notificationService } from 'src/services/notificationService'
 
 const PAGE_SIZE = 15
 const POLL_MS = 60000
 const LOAD_MORE_THRESHOLD = 60 // px còn lại tới đáy thì tải tiếp
 
-const TABS: { kind: NotificationKind; label: string; empty: string; icon: string }[] = [
-  { kind: 'general', label: 'Thông báo', empty: 'Chưa có thông báo nào', icon: '🔔' },
-  { kind: 'mention', label: 'Đề cập', empty: 'Chưa có ai nhắc đến bạn', icon: '@' },
+const TABS: { kind: NotificationKind; label: string; empty: string; icon: typeof cilBell }[] = [
+  { kind: 'general', label: 'Thông báo', empty: 'Chưa có thông báo nào', icon: cilBell },
+  { kind: 'mention', label: 'Đề cập', empty: 'Chưa có ai nhắc đến bạn', icon: cilBell },
 ]
 
 interface ListState {
@@ -187,8 +187,9 @@ const AppHeaderNotifications = () => {
       }
     }
 
-    if (n.conversationId) {
-      // TODO: đổi theo route thật của trang chat
+    if (n.taskId) {
+      navigate(`/tasks/${n.taskId}`)
+    } else if (n.conversationId) {
       const query = new URLSearchParams({ conversationId: n.conversationId })
       if (n.messageId) query.set('messageId', n.messageId)
       navigate(`/messages?${query.toString()}`)
@@ -250,7 +251,7 @@ const AppHeaderNotifications = () => {
         }
       }}
     >
-      {soundOn ? '🔔' : '🔕'}
+      <CIcon icon={soundOn ? cilVolumeHigh : cilVolumeOff} />
     </button>
     <button
       type="button"
@@ -282,7 +283,7 @@ const AppHeaderNotifications = () => {
 
           {!loading && current.loaded && current.items.length === 0 && (
             <div className="noti-state">
-              <span className="noti-state-icon">{tabInfo.icon}</span>
+              <span className="noti-state-icon"><CIcon icon={tabInfo.icon} /></span>
               {tabInfo.empty}
             </div>
           )}
@@ -296,7 +297,7 @@ const AppHeaderNotifications = () => {
             >
               <div className="noti-avatar">
                 {initialOf(n)}
-                {kindOf(n) === 'mention' && <span className="noti-avatar-type">@</span>}
+                {kindOf(n) === 'mention' && <span className="noti-avatar-type"><CIcon icon={cilBell} size="sm" /></span>}
               </div>
 
               <div className="noti-body">
@@ -315,6 +316,16 @@ const AppHeaderNotifications = () => {
           {current.items.length > 0 && !hasMore && !loading && current.items.length > PAGE_SIZE && (
             <div className="noti-more">Đã hiển thị tất cả</div>
           )}
+        </div>
+
+        <div className="border-top p-2 text-center bg-body-tertiary">
+          <button
+            type="button"
+            className="btn btn-sm btn-link text-decoration-none fw-semibold text-primary w-100"
+            onClick={() => navigate('/notifications')}
+          >
+            Xem tất cả thông báo &rarr;
+          </button>
         </div>
       </CDropdownMenu>
     </CDropdown>

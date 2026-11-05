@@ -3,7 +3,6 @@
 import React from 'react'
 
 import {
-  CButton,
   CDropdown,
   CDropdownItem,
   CDropdownMenu,
@@ -14,6 +13,7 @@ import { ProjectStatus } from 'src/types/ProjectType/project'
 
 interface Props {
   status: ProjectStatus
+  progress?: number
 
   loading?: boolean
 
@@ -22,15 +22,12 @@ interface Props {
   onResume: () => void
   onComplete: () => void
   onCancel: () => void
-
-  onActivate: () => void
-  onDeactivate: () => void
-
-  isActive?: boolean
+  onReopen: () => void
 }
 
 const ProjectStatusMenu: React.FC<Props> = ({
   status,
+  progress = 0,
   loading = false,
 
   onStart,
@@ -38,11 +35,7 @@ const ProjectStatusMenu: React.FC<Props> = ({
   onResume,
   onComplete,
   onCancel,
-
-  onActivate,
-  onDeactivate,
-
-  isActive = true,
+  onReopen,
 }) => {
   return (
     <CDropdown>
@@ -70,11 +63,11 @@ const ProjectStatusMenu: React.FC<Props> = ({
               Tạm dừng
             </CDropdownItem>
 
-            <CDropdownItem
-              onClick={onComplete}
-            >
-              Hoàn thành
-            </CDropdownItem>
+            {progress >= 100 && (
+              <CDropdownItem onClick={onComplete}>
+                Hoàn thành
+              </CDropdownItem>
+            )}
 
             <CDropdownItem
               onClick={onCancel}
@@ -84,27 +77,18 @@ const ProjectStatusMenu: React.FC<Props> = ({
           </>
         )}
 
-        {status === 'OnHold' && (
-          <CDropdownItem
-            onClick={onResume}
-          >
-            Tiếp tục dự án
+        {status === 'Cancelled' && (
+          <CDropdownItem onClick={onReopen}>
+            Kích hoạt lại
           </CDropdownItem>
         )}
 
-        {!isActive ? (
-          <CDropdownItem
-            onClick={onActivate}
-          >
+        {status === 'OnHold' && (
+          <CDropdownItem onClick={onResume}>
             Kích hoạt lại
           </CDropdownItem>
-        ) : (
-          <CDropdownItem
-            onClick={onDeactivate}
-          >
-            Vô hiệu hóa
-          </CDropdownItem>
         )}
+
       </CDropdownMenu>
     </CDropdown>
   )

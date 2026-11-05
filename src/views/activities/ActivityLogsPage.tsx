@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
-import { CAlert, CCard, CCardBody } from '@coreui/react'
+import { CCard, CCardBody } from '@coreui/react'
+import ToastAlert from 'src/components/ToastAlert'
 
 import type {
   ActivityFilters,
@@ -10,7 +11,7 @@ import type {
 
 import ActivityStats from './components/ActivityStats'
 import ActivityTable from './components/ActivityTable'
-import { getCurrentMonthRange } from './utils/logHelpers'
+import { getCurrentMonthRange, toParam } from './utils/logHelpers'
 import { useAsync } from './hooks/useAsync'
 import { useFilters } from './hooks/useFilters'
 import PageHeader from './common/PageHeader'
@@ -25,9 +26,9 @@ const INITIAL_FILTERS: ActivityFilters = {
   search: '',
   activityType: '',
   employeeId: '',
-  ...getCurrentMonthRange(),
+  fromDate: '',
+  toDate: '',
 }
-
 function toOptions(values?: string[]): SelectOption[] {
   return (values ?? []).map((value) => ({
     value,
@@ -47,6 +48,8 @@ export default function ActivityLogsPage() {
         page,
         pageSize: PAGE_SIZE,
         ...applied,
+        fromDate: toParam(applied.fromDate),
+        toDate: toParam(applied.toDate),
       }),
     [applied, page],
   )
@@ -54,8 +57,8 @@ export default function ActivityLogsPage() {
   const stats = useAsync(
     () =>
       activityLogQueryService.getActivityLogStats({
-        fromDate: applied.fromDate,
-        toDate: applied.toDate,
+        fromDate: toParam(applied.fromDate),
+        toDate: toParam(applied.toDate),
       }),
     [applied.fromDate, applied.toDate],
   )
@@ -122,11 +125,7 @@ export default function ActivityLogsPage() {
             />
           </FilterBar>
 
-          {list.error && (
-            <CAlert color="danger" className="mt-3 mb-0">
-              {list.error}
-            </CAlert>
-          )}
+          <ToastAlert message={list.error} />
 
           <div className="mt-3">
             <ActivityTable

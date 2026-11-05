@@ -71,9 +71,9 @@ const ProjectCard: React.FC<Props> = ({
       <CCardHeader className="bg-transparent border-0 pt-3 px-3">
         <div className="d-flex justify-content-between align-items-start gap-2">
           <div>
-            <div className="small text-body-secondary">{project.code}</div>
+            <div className="small text-body-secondary">Mã dự án: {project.code}</div>
             <div className="fw-bold fs-6 text-truncate" style={{ maxWidth: '200px' }} title={project.name}>
-              {project.name}
+              Tên dự án: {project.name}
             </div>
           </div>
 
@@ -102,7 +102,7 @@ const ProjectCard: React.FC<Props> = ({
         </div>
 
         <p className="text-body-secondary small mb-3 text-multi-line-truncate" style={{ minHeight: 40, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {project.description || 'Chưa có mô tả.'}
+          Mô tả: {project.description || 'Chưa có mô tả.'}
         </p>
 
         <div className="mb-1 d-flex justify-content-between align-items-center">

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react'
-import { CAlert, CBadge, CButton, CCol, CFormInput, CModal, CModalBody, CModalHeader, CModalTitle, CRow, CSpinner } from '@coreui/react'
+import { CBadge, CButton, CCol, CFormInput, CModal, CModalBody, CModalHeader, CModalTitle, CRow, CSpinner } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilTask } from '@coreui/icons'
 import toast from 'react-hot-toast'
@@ -13,6 +13,7 @@ import { CommentSection } from './CommentSection'
 import { LabelSection } from './LabelSection'
 import { TaskAssigneesSection, type TaskAssigneeOption } from './TaskAssigneesSection'
 import { TaskDetailOverview } from './TaskDetailOverview'
+import ToastAlert from 'src/components/ToastAlert'
 import { TaskMoveSection, type TaskMoveColumn } from './TaskMoveSection'
 import { UpdateTaskRequest } from 'src/types/task'
 
@@ -211,7 +212,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <CSpinner color="primary" />
           </div>
         )}
-        {!loading && error && <CAlert color="danger" className="mb-4">{error}</CAlert>}
+        {!loading && <ToastAlert message={error} />}
 
         {!loading && task && (
           <>
@@ -262,7 +263,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <CommentSection
                   comments={comments}
                   saving={actionLoading}
-                  onCreate={(val) => void createComment(val)}
+                  onCreate={(val, parentCommentId) => void createComment(val, parentCommentId)}
                   onUpdate={(id, val) => void updateComment(id, val)}
                   onDelete={(id) => void deleteComment(id)}
                 />

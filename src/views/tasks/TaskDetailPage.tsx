@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { CAlert, CSpinner } from '@coreui/react'
+import { CSpinner } from '@coreui/react'
+import ToastAlert from 'src/components/ToastAlert'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import taskService from 'src/services/taskService'
@@ -70,7 +71,7 @@ const TaskDetailPage: React.FC = () => {
   }
 
   if (error || !task) {
-    return <CAlert color="danger">{error || 'Không tìm thấy công việc.'}</CAlert>
+    return <ToastAlert message={error || 'Không tìm thấy công việc.'} />
   }
 
   return (

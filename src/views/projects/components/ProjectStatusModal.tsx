@@ -16,11 +16,9 @@ import CIcon from '@coreui/icons-react'
 import {
   cilMediaPlay,
   cilMediaPause,
-  cilReload,
   cilCheckCircle,
   cilBan,
-  cilLockUnlocked,
-  cilLockLocked,
+  cilReload,
 } from '@coreui/icons'
 import { ProjectStatus } from 'src/types/ProjectType/project'
 
@@ -38,7 +36,7 @@ interface Props {
   projectName: string
   projectCode: string
   currentStatus: ProjectStatus
-  isActive?: boolean
+  progress?: number
   loading?: boolean
   onClose: () => void
   onStart: () => void
@@ -46,8 +44,7 @@ interface Props {
   onResume: () => void
   onComplete: () => void
   onCancel: () => void
-  onActivate: () => void
-  onDeactivate: () => void
+  onReopen: () => void
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -63,7 +60,7 @@ const ProjectStatusModal: React.FC<Props> = ({
   projectName,
   projectCode,
   currentStatus,
-  isActive = true,
+  progress = 0,
   loading = false,
   onClose,
   onStart,
@@ -71,8 +68,7 @@ const ProjectStatusModal: React.FC<Props> = ({
   onResume,
   onComplete,
   onCancel,
-  onActivate,
-  onDeactivate,
+  onReopen,
 }) => {
   const statusInfo = STATUS_LABEL[currentStatus] ?? { label: currentStatus, color: 'secondary' }
 
@@ -92,20 +88,23 @@ const ProjectStatusModal: React.FC<Props> = ({
   if (currentStatus === 'Active') {
     actions.push({
       label: 'Tạm dừng',
-      description: 'Tạm dừng dự án, có thể tiếp tục sau',
+      description: 'Tạm dừng dự án để chờ xử lý tiếp.',
       icon: cilMediaPause,
       color: 'warning',
       badgeColor: 'warning',
       handler: onHold,
     })
-    actions.push({
-      label: 'Hoàn thành',
-      description: 'Đánh dấu dự án đã hoàn thành thành công',
-      icon: cilCheckCircle,
-      color: 'primary',
-      badgeColor: 'primary',
-      handler: onComplete,
-    })
+    if (progress >= 100) {
+      actions.push({
+        label: 'Hoàn thành',
+        description: 'Đánh dấu dự án đã hoàn thành thành công',
+        icon: cilCheckCircle,
+        color: 'primary',
+        badgeColor: 'primary',
+        handler: onComplete,
+      })
+    }
+
     actions.push({
       label: 'Hủy dự án',
       description: 'Hủy bỏ dự án này vĩnh viễn',
@@ -116,34 +115,25 @@ const ProjectStatusModal: React.FC<Props> = ({
     })
   }
 
+  if (currentStatus === 'Cancelled') {
+    actions.push({
+      label: 'Kích hoạt lại',
+      description: 'Đưa dự án đã hủy về trạng thái đang hoạt động',
+      icon: cilReload,
+      color: 'success',
+      badgeColor: 'success',
+      handler: onReopen,
+    })
+  }
+
   if (currentStatus === 'OnHold') {
     actions.push({
-      label: 'Tiếp tục dự án',
-      description: 'Khởi động lại dự án đang tạm dừng',
+      label: 'Kích hoạt lại',
+      description: 'Đưa dự án tạm dừng trở lại trạng thái đang hoạt động',
       icon: cilReload,
       color: 'success',
       badgeColor: 'success',
       handler: onResume,
-    })
-  }
-
-  if (isActive) {
-    actions.push({
-      label: 'Vô hiệu hóa',
-      description: 'Vô hiệu hóa dự án khỏi hệ thống',
-      icon: cilLockLocked,
-      color: 'secondary',
-      badgeColor: 'secondary',
-      handler: onDeactivate,
-    })
-  } else {
-    actions.push({
-      label: 'Kích hoạt lại',
-      description: 'Kích hoạt lại dự án đã bị vô hiệu hóa',
-      icon: cilLockUnlocked,
-      color: 'info',
-      badgeColor: 'info',
-      handler: onActivate,
     })
   }
 

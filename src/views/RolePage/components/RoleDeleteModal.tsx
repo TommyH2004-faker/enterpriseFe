@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  CAlert,
   CBadge,
   CButton,
 
@@ -15,6 +14,7 @@ import { cilTrash } from '@coreui/icons'
 import type { Role } from 'src/types/role'
 import { ROLE_MESSAGES } from '../contants/RoleConstants'
 import CIcon from '@coreui/icons-react'
+import ToastAlert from 'src/components/ToastAlert'
 
 
 interface RoleDeleteModalProps {
@@ -79,10 +79,7 @@ const RoleDeleteModal: React.FC<RoleDeleteModalProps> = ({
           </div>
         )}
 
-        <CAlert color="warning" className="mt-3 mb-0">
-          <strong>Lưu ý:</strong>{' '}
-          {ROLE_MESSAGES.DELETE_WARNING}
-        </CAlert>
+        <ToastAlert message={ROLE_MESSAGES.DELETE_WARNING} />
       </CModalBody>
 
       <CModalFooter>

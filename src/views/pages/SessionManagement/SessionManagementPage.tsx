@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CAlert, CButton, CCard, CSpinner } from '@coreui/react'
+import { CButton, CCard, CSpinner } from '@coreui/react'
+import ToastAlert from 'src/components/ToastAlert'
 
 import sessionManagementService from 'src/services/sessionManagementService'
 import type {
@@ -229,17 +230,8 @@ const SessionManagementPage = () => {
       </div>
 
       {/* Thông báo */}
-      {error && (
-        <CAlert color="danger" dismissible onClose={() => setError('')}>
-          {error}
-        </CAlert>
-      )}
-
-      {success && (
-        <CAlert color="success" dismissible onClose={() => setSuccess('')}>
-          {success}
-        </CAlert>
-      )}
+      <ToastAlert message={error} />
+      <ToastAlert message={success} type="success" />
 
       <CCard className="overflow-hidden">
         {/* Bộ lọc và thống kê toàn bộ dữ liệu */}

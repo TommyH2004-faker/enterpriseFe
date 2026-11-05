@@ -17,7 +17,6 @@ const ProjectDetailTabs: React.FC<Props> = ({ projectId }) => {
     { label: 'Tasks', path: `${base}/tasks` },
     { label: 'Members', path: `${base}/members` },
     { label: 'Files', path: `${base}/files` },
-    { label: 'Settings', path: `${base}/settings` },
   ]
 
   return (

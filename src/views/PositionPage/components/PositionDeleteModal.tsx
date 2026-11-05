@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  CAlert,
   CButton,
   CModal,
   CModalBody,
@@ -13,6 +12,7 @@ import { cilTrash } from '@coreui/icons'
 import { Position } from 'src/types/position'
 import { POSITION_MESSAGES } from '../contants/positionConstants'
 import CIcon from '@coreui/icons-react'
+import ToastAlert from 'src/components/ToastAlert'
 
 
 interface PositionDeleteModalProps {
@@ -51,21 +51,11 @@ const PositionDeleteModal: React.FC<PositionDeleteModalProps> = ({
           ?
         </p>
 
-        {selectedPosition &&
-          selectedPosition.employeeCount > 0 && (
-            <CAlert
-              color="warning"
-              className="mt-3 mb-0"
-            >
-              {POSITION_MESSAGES.DELETE_WARNING}{' '}
-
-              <strong>
-                {selectedPosition.employeeCount}
-              </strong>{' '}
-
-              {POSITION_MESSAGES.DELETE_WARNING_EMPLOYEES}
-            </CAlert>
-          )}
+        {selectedPosition && selectedPosition.employeeCount > 0 && (
+          <ToastAlert
+            message={`${POSITION_MESSAGES.DELETE_WARNING} ${selectedPosition.employeeCount} ${POSITION_MESSAGES.DELETE_WARNING_EMPLOYEES}`}
+          />
+        )}
       </CModalBody>
 
       <CModalFooter>

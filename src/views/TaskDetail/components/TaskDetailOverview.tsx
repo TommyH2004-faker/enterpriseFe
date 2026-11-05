@@ -12,7 +12,7 @@ interface TaskDetailOverviewProps {
   onSave: () => void
 }
 
-const getTaskTypeDisplay = (typeCode: number) => {
+const getTaskTypeDisplay = (typeCode: string | number) => {
   const types: Record<number, { label: string; color: string }> = {
     1: { label: 'Task', color: 'primary' },
     2: { label: 'Bug', color: 'danger' },
@@ -22,7 +22,18 @@ const getTaskTypeDisplay = (typeCode: number) => {
     6: { label: 'Story', color: 'warning' },
     7: { label: 'Spike', color: 'dark' }
   }
-  return types[typeCode] || { label: 'Unknown', color: 'light' }
+  const typeName = String(typeCode).trim().toLowerCase()
+  const namedTypes: Record<string, { label: string; color: string }> = {
+    task: { label: 'Task', color: 'primary' },
+    bug: { label: 'Bug', color: 'danger' },
+    feature: { label: 'Feature', color: 'success' },
+    improvement: { label: 'Improvement', color: 'info' },
+    epic: { label: 'Epic', color: 'secondary' },
+    story: { label: 'Story', color: 'warning' },
+    spike: { label: 'Spike', color: 'dark' },
+  }
+
+  return namedTypes[typeName] || types[Number(typeCode)] || { label: 'Unknown', color: 'light' }
 }
 
 export const TaskDetailOverview: React.FC<TaskDetailOverviewProps> = ({ task, draft, onDraftChange, onSave }) => {

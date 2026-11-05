@@ -6,6 +6,7 @@ export interface TaskCommentResponse {
   employeeId: Guid
   employeeName: string
   content: string
+  parentCommentId?: Guid | null
   createdAt: DateTimeString
   updatedAt: DateTimeString | null
   isEdited: boolean
@@ -13,6 +14,7 @@ export interface TaskCommentResponse {
 
 export interface CreateCommentRequest {
   content: string
+  parentCommentId?: Guid | null
 }
 
 export interface UpdateCommentRequest {

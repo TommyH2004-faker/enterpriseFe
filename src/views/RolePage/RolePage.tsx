@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
-import { CAlert, CCard, CCardHeader } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilX } from '@coreui/icons'
+import { CCard, CCardHeader } from '@coreui/react'
 
 // =========================================================
 // TYPES
@@ -29,6 +27,7 @@ import RoleFormModal from './components/RoleFormModal'
 import RoleDeleteModal from './components/RoleDeleteModal'
 import RoleSearchBar from './components/RoleSearchBar'
 import RolePermissionModal from './components/RolePermissionModal'
+import ToastAlert from 'src/components/ToastAlert'
 
 /**
  * Main RolePage Component
@@ -76,7 +75,6 @@ const RolePage: React.FC = () => {
     handleSearchChange,
     handleSort,
     loadRoles,
-    clearError,
   } = useRoleData()
 
   // =========================================================
@@ -161,23 +159,7 @@ const RolePage: React.FC = () => {
           ERROR ALERT
       ====================================================== */}
 
-      {error && (
-        <CAlert
-          color="danger"
-          dismissible
-          onClose={clearError}
-          className="mb-4"
-        >
-          <div className="d-flex align-items-center">
-            <CIcon
-              icon={cilX}
-              className="me-2"
-            />
-
-            {error}
-          </div>
-        </CAlert>
-      )}
+      <ToastAlert message={error} />
 
       {/* =====================================================
           STATISTICS

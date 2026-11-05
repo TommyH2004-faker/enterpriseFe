@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { CAlert, CCard } from '@coreui/react'
+import { CCard } from '@coreui/react'
 import toast from 'react-hot-toast'
+import ToastAlert from 'src/components/ToastAlert'
 import { useUserFilters } from './hooks/useUserFilters'
 import { useUserStatistics } from './hooks/useUserStatistics'
 import { useUser } from './hooks/useUser'
@@ -90,15 +91,7 @@ const {
     <div className="user-page">
       <UserPageHeader onAddClick={openCreateModal} />
 
-      {error && (
-        <CAlert
-          color="danger"
-          dismissible
-          className="mb-4"
-        >
-          {error}
-        </CAlert>
-      )}
+      <ToastAlert message={error} />
 
       <UserStatistics stats={stats} />
 

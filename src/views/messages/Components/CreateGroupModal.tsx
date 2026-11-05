@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  CAlert,
   CButton,
   CFormInput,
   CFormSelect,
@@ -13,6 +12,7 @@ import {
 } from '@coreui/react'
 import { ChatService, CreateGroupRequest } from 'src/services/chatService'
 import { useCreateGroup } from '../hooks/useCreateGroup'
+import ToastAlert from 'src/components/ToastAlert'
 import { initialOf } from '../utils/utils'
 
 
@@ -113,7 +113,7 @@ const CreateGroupModal: React.FC<Props> = ({
           </div>
         )}
 
-        {g.error && <CAlert color="danger" className="mb-0">{g.error}</CAlert>}
+        <ToastAlert message={g.error} />
 
         <div className="group-results">
           {g.loading ? (

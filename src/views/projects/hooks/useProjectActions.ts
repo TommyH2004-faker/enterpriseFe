@@ -21,10 +21,14 @@ export const useProjectActions = () => {
         error: null,
       }
     } catch (err: any) {
+      const responseMessage = err?.response?.data?.message
+      const responseDescription = err?.response?.data?.error?.description
       return {
         success: false,
         error:
-          err?.response?.data?.message ||
+          responseMessage ||
+          responseDescription ||
+          err?.message ||
           'Thao tác thất bại.',
       }
     } finally {
@@ -54,14 +58,9 @@ export const useProjectActions = () => {
         projectService.cancel(id),
       ),
 
-    activate: (id: string) =>
+    reopen: (id: string) =>
       run(() =>
-        projectService.activate(id),
-      ),
-
-    deactivate: (id: string) =>
-      run(() =>
-        projectService.deactivate(id),
+        projectService.reopen(id),
       ),
 
     deleteProject: (id: string) =>

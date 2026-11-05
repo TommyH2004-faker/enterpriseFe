@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CAlert, CCard, CCardBody } from '@coreui/react'
+import { CCard, CCardBody } from '@coreui/react'
+import ToastAlert from 'src/components/ToastAlert'
 
 import auditLogService from 'src/services/auditLogService'
 import { AuditFilters } from 'src/types/auditLog'
@@ -22,7 +23,8 @@ const INITIAL_FILTERS: AuditFilters = {
   module: '',
   action: '',
   entityType: '',
-  ...getCurrentMonthRange(),
+  fromDate: '',
+  toDate: '',
 }
 
 export default function AuditLogsPage() {
@@ -74,11 +76,7 @@ export default function AuditLogsPage() {
               <FilterSelect value={draft.entityType} placeholder="Tất cả đối tượng" options={toOptions(filterOptions.data?.entityTypes)} onChange={(v) => patch({ entityType: v })} />
             </FilterBar>
 
-            {list.error && (
-              <CAlert color="danger" className="mt-3 mb-0">
-                {list.error}
-              </CAlert>
-            )}
+            <ToastAlert message={list.error} />
 
             <div className="mt-3">
               <AuditTable

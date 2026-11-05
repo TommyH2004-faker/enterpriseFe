@@ -16,7 +16,7 @@ interface Props {
   onApply: () => void
   onReset: () => void
   loading?: boolean
-  children?: ReactNode // các FilterSelect
+  children?: ReactNode
 }
 
 export default function FilterBar({
@@ -29,11 +29,10 @@ export default function FilterBar({
   children,
 }: Props) {
   return (
-    <div className="d-flex flex-wrap align-items-center gap-2">
-      <CInputGroup style={{ flex: '1 1 280px', maxWidth: 420 }}>
-        <CInputGroupText>
-          <CIcon icon={cilSearch} />
-        </CInputGroupText>
+    <div className="d-flex flex-wrap align-items-center gap-3">
+      {/* Search Input */}
+      <CInputGroup className="flex-grow-1" style={{ minWidth: '250px', maxWidth: '400px' }}>
+        <CInputGroupText><CIcon icon={cilSearch} /></CInputGroupText>
         <CFormInput
           value={value.search}
           placeholder={searchPlaceholder}
@@ -42,30 +41,37 @@ export default function FilterBar({
         />
       </CInputGroup>
 
-      <div className="d-flex align-items-center gap-1">
+      {/* Date Range */}
+      <CInputGroup style={{ width: 'auto' }}>
         <CFormInput
           type="date"
           value={value.fromDate}
           max={value.toDate || undefined}
           onChange={(e) => onChange({ fromDate: e.target.value })}
         />
-        <span className="text-body-secondary">-</span>
+        <CInputGroupText className="bg-light text-body-secondary px-2">-</CInputGroupText>
         <CFormInput
           type="date"
           value={value.toDate}
           min={value.fromDate || undefined}
           onChange={(e) => onChange({ toDate: e.target.value })}
         />
+      </CInputGroup>
+
+      {/* Selects from children */}
+      <div className="d-flex flex-wrap gap-2 flex-grow-1">
+        {children}
       </div>
 
-      {children}
-
-      <CButton color="light" variant="outline" onClick={onReset} disabled={loading}>
-        Đặt lại
-      </CButton>
-      <CButton color="primary" onClick={onApply} disabled={loading}>
-        Lọc
-      </CButton>
+      {/* Actions */}
+      <div className="d-flex gap-2 ms-auto">
+        <CButton color="light" variant="outline" onClick={onReset} disabled={loading}>
+          Đặt lại
+        </CButton>
+        <CButton color="primary" onClick={onApply} disabled={loading} className="px-4">
+          Lọc
+        </CButton>
+      </div>
     </div>
   )
 }

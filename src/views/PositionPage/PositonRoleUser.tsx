@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  CAlert,
   CCard,
 } from '@coreui/react'
 
@@ -17,6 +16,7 @@ import PositionTableFooter from './components/PositionTableFooter'
 import PositionFormModal from './components/PositionFormModal'
 import PositionDeleteModal from './components/PositionDeleteModal'
 import toast from 'react-hot-toast'
+import ToastAlert from 'src/components/ToastAlert'
 
 // Components
 
@@ -101,15 +101,7 @@ const PositionRoleUser = () => {
       <PositionPageHeader onAddClick={openCreateModal} />
 
       {/* Error Alert */}
-      {error && (
-        <CAlert
-          color="danger"
-          dismissible
-          className="mb-4"
-        >
-          {error}
-        </CAlert>
-      )}
+      <ToastAlert message={error} />
 
       {/* Statistics Cards */}
       <PositionStatistics stats={stats} />

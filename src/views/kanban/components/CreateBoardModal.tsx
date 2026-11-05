@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  CAlert,
   CButton,
   CFormInput,
   CFormLabel,
@@ -11,6 +10,7 @@ import {
   CModalTitle,
   CSpinner,
 } from '@coreui/react'
+import ToastAlert from 'src/components/ToastAlert'
 
 interface CreateBoardModalProps {
   visible: boolean
@@ -55,7 +55,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
       </CModalHeader>
       <form onSubmit={handleSubmit}>
         <CModalBody className="p-4">
-          {error && <CAlert color="danger">{error}</CAlert>}
+          <ToastAlert message={error} />
 
           <div className="mb-3">
             <CFormLabel className="fw-semibold text-dark">Tên board *</CFormLabel>

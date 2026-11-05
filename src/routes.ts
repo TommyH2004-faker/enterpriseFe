@@ -25,12 +25,12 @@ const ProjectFiles = React.lazy(() => import('./views/ProjectDetail/tabs/Project
 const ProjectSettings = React.lazy(() => import('./views/ProjectDetail/components/settings/ProjectSettings'))
 
 // Hệ thống
-const Notifications = React.lazy(() => import('./views/notifications/Notifications'))
+const Notifications = React.lazy(() => import('./views/NotificationPage/NotificationPage'))
 const Messages = React.lazy(() => import('./views/messages/Messages'))
 const Reports = React.lazy(() => import('./views/reports/Reports'))
 const Settings = React.lazy(() => import('./views/settings/Settings'))
-const Activities = React.lazy(() => import('./views/activities/Activities'))
-const AuditLog = React.lazy(() => import('./views/audit/AauditLog'))
+const Activities = React.lazy(() => import('./views/activities/ActivityLogsPage.tsx'))
+const AuditLog = React.lazy(() => import('./views/audit/AuditLogsPage.tsx'))
 const SearchResults = React.lazy(() => import('./views/search/SearchResults'))
 const PositionRoleUser = React.lazy(() => import('./views/PositionPage/PositonRoleUser.tsx'))
 const RoleUser = React.lazy(() => import('./views/RolePage/RolePage.tsx'))
@@ -53,6 +53,7 @@ export const routes = [
   { path: '/notifications', name: 'Thông báo', element: Notifications },
   { path: '/messages', name: 'Tin nhắn', element: Messages },
   { path: '/reports', name: 'Báo cáo', element: Reports },
+  { path: '/settings', name: 'Cài đặt', element: Settings },
   { path: '/sessions', name: 'Quản lý phiên', element: SessionManagementPage },
   { path: '/profile', name: 'Hồ sơ', element: ProfilePage },
   {
@@ -120,11 +121,6 @@ export const routes = [
         path: 'files',
         name: 'Tệp',
         element: ProjectFiles,
-      },
-      {
-        path: 'settings',
-        name: 'Cài đặt',
-        element: ProjectSettings,
       },
     ],
   },
