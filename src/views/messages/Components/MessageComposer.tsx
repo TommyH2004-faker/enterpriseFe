@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import CIcon from '@coreui/icons-react'
-import { cilPaperclip, cilSend, cilX } from '@coreui/icons'
+import { cilDescription, cilPaperclip, cilSend, cilX } from '@coreui/icons'
 import { Message, MessageAttachment } from 'src/services/chatService'
 
 import { formatSize } from './AttachmentView'
@@ -50,8 +50,6 @@ const MessageComposer: React.FC<Props> = ({
   onUpload,
   onSend,
 }) => {
-   console.log('[Mention] chatid:', chatid)
-  console.log('[Mention] members:', members)
   const [text, setText] = useState('')
   const [pending, setPending] = useState<PendingFile[]>([])
   const [picked, setPicked] = useState<MentionMember[]>([])
@@ -61,25 +59,22 @@ const MessageComposer: React.FC<Props> = ({
 
   const inputRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  // THÊM ĐOẠN NÀY VÀO: 
-  // Lắng nghe sự thay đổi của chatId, hễ chuyển người chat là xóa sạch dữ liệu nhập dở
+
   useEffect(() => {
     setText('')
     setPicked([])
     setMention(null)
-    setPending(cur => {
-      // Xóa các blob URL để tránh rò rỉ bộ nhớ trước khi làm rỗng mảng
-      cur.forEach(p => {
+    setPending((cur) => {
+      cur.forEach((p) => {
         if (p.previewUrl) URL.revokeObjectURL(p.previewUrl)
       })
       return []
     })
   }, [chatid])
+
   useEffect(() => {
     if (replyTo) inputRef.current?.focus()
   }, [replyTo])
-
-  /* ---------- file ---------- */
 
   const updatePending = (id: string, patch: Partial<PendingFile>) =>
     setPending((cur) => cur.map((p) => (p.localId === id ? { ...p, ...patch } : p)))
@@ -122,8 +117,6 @@ const MessageComposer: React.FC<Props> = ({
   const uploading = pending.some((p) => !p.attachment && !p.error)
   const ready = pending.filter((p) => p.attachment)
   const canSend = !sending && !uploading && (text.trim().length > 0 || ready.length > 0)
-
-  /* ---------- tag người ---------- */
 
   const candidates = useMemo(() => {
     if (!mention) return []
@@ -182,8 +175,6 @@ const MessageComposer: React.FC<Props> = ({
     }
   }
 
-  /* ---------- gửi ---------- */
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSend) return
@@ -239,13 +230,20 @@ const MessageComposer: React.FC<Props> = ({
           <div className="reply-bar-copy">
             <strong>Đang trả lời {nameOf(replyTo.senderId)}</strong>
             <small>
-              {replyTo.isDeleted
-                ? 'Tin nhắn đã bị thu hồi'
-                : replyTo.content || '📎 Tệp đính kèm'}
+              {replyTo.isDeleted ? (
+                'Tin nhắn đã bị thu hồi'
+              ) : replyTo.content ? (
+                replyTo.content
+              ) : (
+                <>
+                  <CIcon icon={cilPaperclip} size="sm" className="me-1" />
+                  Tệp đính kèm
+                </>
+              )}
             </small>
           </div>
           <button type="button" aria-label="Huỷ trả lời" onClick={onCancelReply}>
-            <CIcon icon={cilX} />
+            <CIcon icon={cilX} size="sm" />
           </button>
         </div>
       )}
@@ -258,13 +256,19 @@ const MessageComposer: React.FC<Props> = ({
               className={`pending-file ${p.error ? 'error' : ''}`}
               title={p.error ?? p.file.name}
             >
-              {p.previewUrl ? <img src={p.previewUrl} alt="" /> : <span>📄</span>}
+              {p.previewUrl ? (
+                <img src={p.previewUrl} alt="" />
+              ) : (
+                <span className="pending-file-icon">
+                  <CIcon icon={cilDescription} size="xl" />
+                </span>
+              )}
               <span className="pending-name">{p.file.name}</span>
               <small>
                 {p.error ?? (p.attachment ? formatSize(p.file.size) : `${p.progress}%`)}
               </small>
               <button type="button" aria-label="Bỏ tệp" onClick={() => removePending(p.localId)}>
-                <CIcon icon={cilX} />
+                <CIcon icon={cilX} size="sm" />
               </button>
             </div>
           ))}
@@ -279,7 +283,7 @@ const MessageComposer: React.FC<Props> = ({
               key={m.userId}
               className={i === activeIdx ? 'active' : ''}
               onMouseDown={(e) => {
-                e.preventDefault() // giữ focus ở ô nhập
+                e.preventDefault()
                 pickMention(m)
               }}
             >
@@ -303,7 +307,7 @@ const MessageComposer: React.FC<Props> = ({
         />
         <button
           type="button"
-          className="send-btn"
+          className="attach-btn"
           title="Đính kèm tệp"
           aria-label="Đính kèm tệp"
           onClick={() => fileRef.current?.click()}
@@ -314,7 +318,7 @@ const MessageComposer: React.FC<Props> = ({
         <input
           ref={inputRef}
           value={text}
-          placeholder="Aa"
+          placeholder="Nhập tin nhắn... (dùng @ để nhắc tên)"
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}

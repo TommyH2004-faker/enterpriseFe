@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import CIcon from '@coreui/icons-react'
-import { cilChatBubble } from '@coreui/icons'
+import { cilChatBubble, cilUserX, cilX } from '@coreui/icons'
 import {
   ConversationListItem,
+  ConversationMemberRole,
   ConversationType,
   EmployeeSearchItem,
 } from 'src/services/chatService'
@@ -16,22 +17,21 @@ import NewChatBox from './Components/NewChatBox'
 import ChatHeader from './Components/ChatHeader'
 import MessageList from './Components/MessageList'
 import { initialOf } from './utils/utils'
+import { normalizeRole } from './utils/groupPermissions'
 import CreateGroupModal from './Components/CreateGroupModal'
-import ConfirmDeleteModal from './Components/ConfirmDeleteModal'
+import GroupMembersModal from './Components/GroupMembersModal'
 import ToastAlert from 'src/components/ToastAlert'
 
 const Messages: React.FC = () => {
   const chat = useChat()
   const [showNewChat, setShowNewChat] = useState(false)
   const [showGroupModal, setShowGroupModal] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<ConversationListItem | null>(null)
+  const [showMembersModal, setShowMembersModal] = useState(false)
+  const [membersModalInitialView, setMembersModalInitialView] = useState<'info' | 'add'>('info')
   const [peopleQuery, setPeopleQuery] = useState('')
   const { people, clear } = useEmployeeSearch(chat.service, peopleQuery, showNewChat)
 
   const active = chat.active
-  console.log('[Chat active]', active)
-console.log('[Active members]', active?.members)
-console.log('[Current user]', chat.currentUserId)
   const isDirect = active?.conversationType === ConversationType.Direct
 
   const members = useMemo(
@@ -71,11 +71,24 @@ console.log('[Current user]', chat.currentUserId)
     }
   }
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return null
-    const message = await chat.deleteConversation(deleteTarget.id)
-    if (!message) setDeleteTarget(null)
-    return message
+  // Toast tự tắt sau 6 giây
+  useEffect(() => {
+    if (!chat.notice) return
+    const timer = window.setTimeout(() => chat.setNotice(null), 6000)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.notice?.id])
+
+  const myMember = (active?.members ?? []).find(
+    (m) =>
+      chat.currentUserId &&
+      m.userId.toLowerCase() === chat.currentUserId.toLowerCase(),
+  )
+  const iAmOwner = normalizeRole(myMember?.role) === ConversationMemberRole.Owner
+
+  const handleSelectConversation = (item: ConversationListItem) => {
+    chat.setRemovedBannerGroupName(null)
+    void chat.openConversation(item)
   }
 
   return (
@@ -85,11 +98,15 @@ console.log('[Current user]', chat.currentUserId)
         activeId={active?.id}
         loading={chat.loading}
         query={chat.query}
+        scope={chat.scope}
+        onScopeChange={chat.setScope}
         onQueryChange={chat.setQuery}
-        onSelect={chat.openConversation}
+        onSelect={handleSelectConversation}
         onToggleNewChat={() => setShowNewChat((v) => !v)}
         onCreateGroup={() => setShowGroupModal(true)}
-        onDelete={setDeleteTarget}
+        onArchive={(item) => void chat.deleteConversation(item.id)}
+        onUnarchive={(item) => void chat.unhideConversation(item.id)}
+        onRestoreGroup={(item) => void chat.restoreDissolvedGroup(item.id)}
       >
         {showNewChat && (
           <NewChatBox
@@ -104,6 +121,22 @@ console.log('[Current user]', chat.currentUserId)
       <main className="chat-thread">
         <ToastAlert message={chat.error} />
 
+        {/* KHUNG 4 - VÙNG 3: Thanh thông báo vàng nhạt đầu khung chat khi vừa bị xóa khỏi nhóm */}
+        {chat.removedBannerGroupName && (
+          <div className="removed-from-group-banner" role="alert">
+            <CIcon icon={cilUserX} className="removed-banner-icon" />
+            <span>Bạn đã bị xóa khỏi nhóm {chat.removedBannerGroupName}</span>
+            <button
+              type="button"
+              className="removed-banner-close"
+              aria-label="Đóng thông báo"
+              onClick={() => chat.setRemovedBannerGroupName(null)}
+            >
+              <CIcon icon={cilX} size="sm" />
+            </button>
+          </div>
+        )}
+
         {!active ? (
           <div className="thread-placeholder">
             <CIcon icon={cilChatBubble} size="3xl" />
@@ -112,7 +145,36 @@ console.log('[Current user]', chat.currentUserId)
           </div>
         ) : (
           <>
-            <ChatHeader conversation={active} />
+            <ChatHeader
+              conversation={active}
+              currentUserId={chat.currentUserId}
+              onOpenInfo={() => {
+                setMembersModalInitialView('info')
+                setShowMembersModal(true)
+              }}
+              onOpenAddMembers={() => {
+                setMembersModalInitialView('add')
+                setShowMembersModal(true)
+              }}
+            />
+            {active.isArchived && (
+              <div className="state-banner">
+                <span>Nhóm đã bị giải tán. Không thể gửi thêm tin nhắn.</span>
+                {iAmOwner && (
+                  <button type="button" onClick={() => void chat.restoreDissolvedGroup(active.id)}>
+                    Khôi phục nhóm
+                  </button>
+                )}
+              </div>
+            )}
+            {active.isHidden && !active.isArchived && (
+              <div className="state-banner">
+                <span>Cuộc trò chuyện đã được lưu trữ. Có tin nhắn mới, nó sẽ tự hiện lại.</span>
+                <button type="button" onClick={() => void chat.unhideConversation(active.id)}>
+                  Bỏ lưu trữ
+                </button>
+              </div>
+            )}
             <MessageList
               messages={chat.messages}
               currentUserId={chat.currentUserId}
@@ -124,16 +186,18 @@ console.log('[Current user]', chat.currentUserId)
               onReact={chat.toggleReaction}
               onReply={chat.setReplyTo}
             />
-            <MessageComposer
-              chatid={active.id}
-              sending={chat.sending}
-              replyTo={chat.replyTo}
-              members={mentionable}
-              nameOf={nameOf}
-              onCancelReply={() => chat.setReplyTo(null)}
-              onUpload={chat.uploadAttachment}
-              onSend={chat.sendMessage}
-            />
+            {!active.isArchived && (
+              <MessageComposer
+                chatid={active.id}
+                sending={chat.sending}
+                replyTo={chat.replyTo}
+                members={mentionable}
+                nameOf={nameOf}
+                onCancelReply={() => chat.setReplyTo(null)}
+                onUpload={chat.uploadAttachment}
+                onSend={chat.sendMessage}
+              />
+            )}
           </>
         )}
       </main>
@@ -146,14 +210,33 @@ console.log('[Current user]', chat.currentUserId)
         onSubmit={chat.createGroup}
       />
 
-      <ConfirmDeleteModal
-        visible={!!deleteTarget}
-        name={deleteTarget?.name || 'cuộc trò chuyện này'}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={confirmDelete}
-      />
+      {active && !isDirect && (
+        <GroupMembersModal
+          visible={showMembersModal}
+          initialView={membersModalInitialView}
+          conversation={active}
+          currentUserId={chat.currentUserId}
+          service={chat.service}
+          onClose={() => setShowMembersModal(false)}
+          onRemoveMember={chat.removeMember}
+          onAddMembers={chat.addMembers}
+          onChangeRole={chat.changeMemberRole}
+          onTransferOwnership={chat.transferOwnership}
+          onUpdateInfo={chat.updateConversationInfo}
+          onArchiveGroup={chat.archiveConversation}
+        />
+      )}
+      {chat.notice && (
+        <div className="chat-toast" role="status">
+          <span>{chat.notice.text}</span>
+          {chat.notice.undoId && (
+            <button type="button" onClick={() => void chat.unhideConversation(chat.notice!.undoId!)}>
+              Hoàn tác
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
-
 export default Messages

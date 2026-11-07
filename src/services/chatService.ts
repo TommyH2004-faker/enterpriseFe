@@ -7,6 +7,12 @@ import axiosClient from 'src/api/axiosClient'
 export enum ConversationType { Direct = 1, Group = 2, Project = 3, Department = 4 }
 export enum MessageType { Text = 1, Image = 2, File = 3, Video = 4, Audio = 5, System = 6 }
 
+export enum ConversationMemberRole {
+  Owner = 1,
+  Administrator = 2,
+  Member = 3,
+}
+
 export enum MessageReactionType {
   Like = 1,
   Love = 2,
@@ -37,9 +43,25 @@ export interface ConversationListItem {
   lastMessage?: { id?: string; content?: string | null; sentAt: string; isDeleted: boolean } | null
 }
 
+export interface ConversationMember {
+  userId: string
+  fullName?: string
+  role?: ConversationMemberRole
+  isActive: boolean
+  joinedAt?: string
+  isMuted?: boolean
+  isPinned?: boolean
+}
+
+export type ConversationScope = 'active' | 'archived' | 'dissolved'
+
 export interface ConversationDetail extends ConversationListItem {
   description?: string
-  members: Array<{ userId: string; isActive: boolean; fullName?: string }>
+  /** Tôi đã lưu trữ (ẩn) hội thoại này */
+  isHidden?: boolean
+  /** Nhóm đã bị giải tán */
+  isArchived?: boolean
+  members: ConversationMember[]
 }
 export interface MessageAttachment {
   id: string
@@ -115,17 +137,50 @@ export interface CreateGroupRequest {
   memberUserIds: string[]
 }
 
+/** Backend trả enum dạng chuỗi ("Owner", "Group"...) hoặc số; chuẩn hóa về số. */
+const toEnum = <T extends Record<string, string | number>>(
+  enumObj: T,
+  value: unknown,
+  fallback: number,
+): number => {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const asNumber = Number(value)
+    if (!Number.isNaN(asNumber)) return asNumber
+    const key = Object.keys(enumObj).find((k) => k.toLowerCase() === value.toLowerCase())
+    if (key && typeof enumObj[key] === 'number') return enumObj[key] as number
+    if (value.toLowerCase() === 'admin') return ConversationMemberRole.Administrator
+  }
+  return fallback
+}
+
+const normalizeListItem = <T extends ConversationListItem>(c: T): T => ({
+  ...c,
+  conversationType: toEnum(ConversationType, c.conversationType, ConversationType.Direct),
+})
+
+const normalizeDetail = (c: ConversationDetail | null): ConversationDetail | null =>
+  c
+    ? {
+        ...normalizeListItem(c),
+        members: (c.members ?? []).map((m) => ({
+          ...m,
+          role: toEnum(ConversationMemberRole, m.role, ConversationMemberRole.Member),
+        })),
+      }
+    : c
+
 export class ChatService {
   constructor(private readonly apiBaseUrl: string) {}
 
-  async getConversations(search?: string): Promise<ConversationListItem[]> {
-    const response = await axiosClient.get<ApiResponse<ConversationListItem[]>>('/api/v1/conversations', { params: { search } })
-    return response.data.data ?? []
+  async getConversations(search?: string, scope: ConversationScope = 'active'): Promise<ConversationListItem[]> {
+    const response = await axiosClient.get<ApiResponse<ConversationListItem[]>>('/api/v1/conversations', { params: { search, scope } })
+    return (response.data.data ?? []).map(normalizeListItem)
   }
 
   async getConversation(id: string): Promise<ConversationDetail> {
     const response = await axiosClient.get<ApiResponse<ConversationDetail>>(`/api/v1/conversations/${id}`)
-    return response.data.data ?? null
+    return normalizeDetail(response.data.data ?? null) as ConversationDetail
   }
 
   async getMessages(id: string, before?: string, limit = 30): Promise<Message[]> {
@@ -165,7 +220,7 @@ export class ChatService {
       '/api/v1/conversations/direct',
       { targetUserId },
     )
-    return response.data.data ?? null
+    return normalizeDetail(response.data.data ?? null) as ConversationDetail
   }
 
   /** GIẢ ĐỊNH route: POST /api/v1/conversations/group */
@@ -174,7 +229,7 @@ export class ChatService {
       '/api/v1/conversations/group',
       request,
     )
-    return response.data.data ?? null
+    return normalizeDetail(response.data.data ?? null) as ConversationDetail
   }
 
     async sendMessage(conversationId: string, payload: SendMessagePayload): Promise<Message> {
@@ -276,10 +331,61 @@ async uploadAttachment(
     return response.data.data ?? null
   }
   async deleteConversation(conversationId: string): Promise<void> {
-  await axiosClient.delete(
-    `/api/v1/conversations/${conversationId}`,
-  )
-}
+    await axiosClient.delete(
+      `/api/v1/conversations/${conversationId}`,
+    )
+  }
+
+  /** Bỏ lưu trữ: đưa hội thoại về danh sách chính */
+  async unhideConversation(conversationId: string): Promise<void> {
+    await axiosClient.post(`/api/v1/conversations/${conversationId}/unhide`)
+  }
+
+  /** Khôi phục nhóm đã giải tán (Owner) */
+  async unarchiveConversation(conversationId: string): Promise<void> {
+    await axiosClient.post(`/api/v1/conversations/${conversationId}/unarchive`)
+  }
+
+  async removeMember(conversationId: string, userId: string): Promise<void> {
+    await axiosClient.delete(`/api/v1/conversations/${conversationId}/members/${userId}`)
+  }
+
+  async addMembers(conversationId: string, userIds: string[]): Promise<ConversationDetail> {
+    const response = await axiosClient.post<ApiResponse<ConversationDetail>>(
+      `/api/v1/conversations/${conversationId}/members`,
+      { userIds },
+    )
+    return normalizeDetail(response.data.data ?? null) as ConversationDetail
+  }
+
+  async changeMemberRole(
+    conversationId: string,
+    userId: string,
+    role: ConversationMemberRole,
+  ): Promise<void> {
+    await axiosClient.put(`/api/v1/conversations/${conversationId}/members/${userId}/role`, { role })
+  }
+
+  async transferOwnership(conversationId: string, newOwnerUserId: string): Promise<void> {
+    await axiosClient.post(`/api/v1/conversations/${conversationId}/transfer-ownership`, {
+      newOwnerUserId,
+    })
+  }
+
+  async updateConversation(
+    conversationId: string,
+    payload: { name?: string | null; description?: string | null; avatarUrl?: string | null },
+  ): Promise<ConversationDetail> {
+    const response = await axiosClient.put<ApiResponse<ConversationDetail>>(
+      `/api/v1/conversations/${conversationId}`,
+      payload,
+    )
+    return normalizeDetail(response.data.data ?? null) as ConversationDetail
+  }
+
+  async archiveConversation(conversationId: string): Promise<void> {
+    await axiosClient.post(`/api/v1/conversations/${conversationId}/archive`)
+  }
   async removeReaction(messageId: string): Promise<void> {
     const response = await axiosClient.delete<ApiResponse<void>>(
       `/api/v1/messages/${messageId}/reactions`,

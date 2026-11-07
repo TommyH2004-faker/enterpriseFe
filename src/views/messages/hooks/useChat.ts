@@ -5,6 +5,8 @@ import {
   ChatService,
   ConversationDetail,
   ConversationListItem,
+  ConversationMemberRole,
+  ConversationScope,
   CreateGroupRequest,
   EmployeeSearchItem,
   Message,
@@ -18,8 +20,14 @@ import {
   sortConversations,
 } from '../utils/utils'
 
-const errorText = (e: unknown, fallback: string) =>
-  e instanceof Error ? e.message : fallback
+const errorText = (e: unknown, fallback: string) => {
+  if (typeof e === 'object' && e !== null && 'response' in e) {
+    const resp = (e as { response?: { data?: { message?: string; title?: string; error?: { description?: string } } } }).response
+    const serverMsg = resp?.data?.message || resp?.data?.error?.description || resp?.data?.title
+    if (serverMsg) return serverMsg
+  }
+  return e instanceof Error ? e.message : fallback
+}
 
 export const useChat = () => {
   const service = useMemo(() => new ChatService(apiBaseUrl), [])
@@ -27,7 +35,10 @@ export const useChat = () => {
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const connectionRef = useRef<HubConnection | null>(null)
   const activeIdRef = useRef<string | null>(null)
+  const activeNameRef = useRef<string | null>(null)
+  const conversationsRef = useRef<ConversationListItem[]>([])
   const queryRef = useRef('')
+  const scopeRef = useRef<ConversationScope>('active')
 
   const [conversations, setConversations] = useState<
     ConversationListItem[]
@@ -39,6 +50,7 @@ export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([])
 
   const [query, setQuery] = useState('')
+  const [scope, setScopeState] = useState<ConversationScope>('active')
 
   const [loading, setLoading] = useState(true)
 
@@ -48,6 +60,16 @@ export const useChat = () => {
     useState<string | null>(null)
 
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<{ id: string; text: string; undoId?: string } | null>(null)
+  const [removedBannerGroupName, setRemovedBannerGroupName] = useState<string | null>(null)
+
+  useEffect(() => {
+    conversationsRef.current = conversations
+  }, [conversations])
+
+  useEffect(() => {
+    activeNameRef.current = active?.name ?? null
+  }, [active])
 
   /* =========================================================
      CONVERSATIONS
@@ -59,6 +81,7 @@ export const useChat = () => {
 
       const result = await service.getConversations(
         queryRef.current || undefined,
+        scopeRef.current,
       )
 
       setConversations(sortConversations(result))
@@ -92,6 +115,7 @@ export const useChat = () => {
 
   useEffect(() => {
     queryRef.current = query
+    scopeRef.current = scope
 
     const timer = window.setTimeout(
       () =>
@@ -104,7 +128,7 @@ export const useChat = () => {
     return () => {
       window.clearTimeout(timer)
     }
-  }, [query, loadConversations])
+  }, [query, scope, loadConversations])
 
   /* =========================================================
      OPEN CONVERSATION
@@ -126,6 +150,11 @@ export const useChat = () => {
       ])
 
       const connection = connectionRef.current
+
+      const previousId = activeIdRef.current
+      if (previousId && previousId !== item.id && connection?.state === HubConnectionState.Connected) {
+        void connection.invoke('LeaveConversation', previousId).catch(() => {})
+      }
 
       if (
         connection?.state === HubConnectionState.Connected
@@ -257,6 +286,7 @@ const deleteConversation = async (
     }
 
     notifyUnreadChanged()
+    setNotice({ id: crypto.randomUUID(), text: 'Đã lưu trữ cuộc trò chuyện.', undoId: conversationId })
 
     return null
   } catch (error) {
@@ -268,6 +298,174 @@ const deleteConversation = async (
     )
   }
 }
+
+  const setScope = (next: ConversationScope) => {
+    if (next === scopeRef.current) return
+    scopeRef.current = next
+    setConversations([])
+    setLoading(true)
+    setScopeState(next)
+  }
+
+  const unhideConversation = async (conversationId: string): Promise<string | null> => {
+    try {
+      setError(null)
+      await service.unhideConversation(conversationId)
+      setNotice(null)
+      setActive((cur) => (cur && cur.id === conversationId ? { ...cur, isHidden: false } : cur))
+      if (scopeRef.current === 'archived') {
+        setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+      } else {
+        await loadConversations()
+      }
+      notifyUnreadChanged()
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể bỏ lưu trữ cuộc trò chuyện.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  const restoreDissolvedGroup = async (conversationId: string): Promise<string | null> => {
+    try {
+      setError(null)
+      await service.unarchiveConversation(conversationId)
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+      setActive((cur) => (cur && cur.id === conversationId ? { ...cur, isArchived: false } : cur))
+      setNotice({ id: crypto.randomUUID(), text: 'Đã khôi phục nhóm.' })
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể khôi phục nhóm.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  /* =========================================================
+     MEMBER MANAGEMENT
+     ========================================================= */
+
+  const removeMember = async (userId: string): Promise<string | null> => {
+    if (!active?.id) return 'Chưa chọn cuộc trò chuyện.'
+    try {
+      setError(null)
+      await service.removeMember(active.id, userId)
+
+      if (userId === currentUserId) {
+        // Tự rời nhóm
+        activeIdRef.current = null
+        setActive(null)
+        setMessages([])
+        setReplyTo(null)
+        await loadConversations()
+      } else {
+        // Xóa thành viên khác: tải lại thông tin hội thoại
+        const updated = await service.getConversation(active.id)
+        setActive(updated)
+        await loadConversations()
+      }
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể xóa thành viên khỏi nhóm.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  const addMembers = async (userIds: string[]): Promise<string | null> => {
+    if (!active?.id) return 'Chưa chọn cuộc trò chuyện.'
+    try {
+      setError(null)
+      const detail = await service.addMembers(active.id, userIds)
+      const [updated, history] = await Promise.all([
+        detail?.id ? Promise.resolve(detail) : service.getConversation(active.id),
+        service.getMessages(active.id),
+      ])
+      setActive(updated)
+      setMessages(history)
+      await loadConversations()
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể thêm thành viên vào nhóm.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  const changeMemberRole = async (
+    userId: string,
+    role: ConversationMemberRole,
+  ): Promise<string | null> => {
+    if (!active?.id) return 'Chưa chọn cuộc trò chuyện.'
+    try {
+      setError(null)
+      await service.changeMemberRole(active.id, userId, role)
+      const updated = await service.getConversation(active.id)
+      setActive(updated)
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể thay đổi vai trò thành viên.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  const transferOwnership = async (newOwnerUserId: string): Promise<string | null> => {
+    if (!active?.id) return 'Chưa chọn cuộc trò chuyện.'
+    try {
+      setError(null)
+      await service.transferOwnership(active.id, newOwnerUserId)
+      const updated = await service.getConversation(active.id)
+      setActive(updated)
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể chuyển quyền Người tạo.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  const updateConversationInfo = async (payload: {
+    name?: string | null
+    description?: string | null
+  }): Promise<string | null> => {
+    if (!active?.id) return 'Chưa chọn cuộc trò chuyện.'
+    try {
+      setError(null)
+      const updated = await service.updateConversation(active.id, payload)
+      const history = await service.getMessages(active.id)
+      setActive(updated)
+      setMessages(history)
+      await loadConversations()
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể cập nhật thông tin nhóm.')
+      setError(msg)
+      return msg
+    }
+  }
+
+  const archiveConversation = async (): Promise<string | null> => {
+    if (!active?.id) return 'Chưa chọn cuộc trò chuyện.'
+    const id = active.id
+    try {
+      setError(null)
+      await service.archiveConversation(id)
+      setConversations((prev) => prev.filter((item) => item.id !== id))
+      activeIdRef.current = null
+      setActive(null)
+      setMessages([])
+      setReplyTo(null)
+      notifyUnreadChanged()
+      return null
+    } catch (e) {
+      const msg = errorText(e, 'Không thể giải tán nhóm.')
+      setError(msg)
+      return msg
+    }
+  }
+
   /* =========================================================
      MESSAGES
      ========================================================= */
@@ -340,6 +538,7 @@ const deleteConversation = async (
         addMessage(await service.sendMessage(active.id, body))
       }
       setReplyTo(null)
+      if (active.isHidden) setActive((cur) => (cur ? { ...cur, isHidden: false } : cur))
       return true
     } catch (e) {
       setError(errorText(e, 'Không thể gửi tin nhắn.'))
@@ -487,10 +686,13 @@ const uploadAttachment = (
     const onConversation = (
       payload?:
         | ConversationListItem
-        | ConversationDetail,
+        | ConversationDetail
+        | { conversationId?: string; reason?: string },
     ) => {
       if (
-        payload?.id &&
+        payload &&
+        'id' in payload &&
+        payload.id &&
         payload.lastActivityAt &&
         typeof payload.unreadCount ===
           'number'
@@ -501,6 +703,66 @@ const uploadAttachment = (
       } else {
         void loadConversations()
       }
+
+      const convId =
+        payload && 'conversationId' in payload
+          ? payload.conversationId
+          : payload && 'id' in payload
+            ? payload.id
+            : undefined
+
+      if (convId && convId === activeIdRef.current) {
+        void service
+          .getConversation(convId)
+          .then((detail) => {
+            if (detail && activeIdRef.current === convId) {
+              setActive(detail)
+            }
+          })
+          .catch(() => {})
+      }
+    }
+
+    const onMemberRemoved = (payload?: { conversationId?: string; reason?: string }) => {
+      const convId = payload?.conversationId
+      if (!convId) return
+
+      const existing = conversationsRef.current.find((c) => c.id === convId)
+      const groupName =
+        (activeIdRef.current === convId ? activeNameRef.current : undefined) ||
+        existing?.name ||
+        'nhóm'
+
+      if (payload?.reason === 'removed') {
+        setRemovedBannerGroupName(groupName)
+      }
+
+      setConversations((prev) => prev.filter((item) => item.id !== convId))
+
+      if (activeIdRef.current === convId) {
+        activeIdRef.current = null
+        setActive(null)
+        setMessages([])
+        setReplyTo(null)
+      }
+
+      notifyUnreadChanged()
+    }
+
+    const onConversationDeleted = (payload?: string | { conversationId?: string }) => {
+      const convId = typeof payload === 'string' ? payload : payload?.conversationId
+      if (!convId) return
+
+      setConversations((prev) => prev.filter((item) => item.id !== convId))
+
+      if (activeIdRef.current === convId) {
+        activeIdRef.current = null
+        setActive(null)
+        setMessages([])
+        setReplyTo(null)
+      }
+
+      notifyUnreadChanged()
     }
 
     /* -------------------------------------------------------
@@ -579,6 +841,22 @@ const uploadAttachment = (
       }
 
       addMessage(message)
+
+      // Đang mở đúng cuộc trò chuyện này: đánh dấu đã đọc ngay, tránh tăng badge chưa đọc
+      if (
+        message.conversationId &&
+        message.conversationId === activeIdRef.current &&
+        message.senderId !== currentUserId
+      ) {
+        void service
+          .markAsRead(message.conversationId, message.id)
+          .then(() => {
+            void loadConversations()
+            notifyUnreadChanged()
+          })
+          .catch(() => {})
+        return
+      }
 
       void loadConversations()
 
@@ -805,6 +1083,16 @@ const uploadAttachment = (
     )
 
     connection.on(
+      'ConversationMemberRemoved',
+      onMemberRemoved,
+    )
+
+    connection.on(
+      'ConversationDeleted',
+      onConversationDeleted,
+    )
+
+    connection.on(
       'ReactionChanged',
       onReactionChanged,
     )
@@ -864,6 +1152,16 @@ const uploadAttachment = (
       )
 
       connection.off(
+        'ConversationMemberRemoved',
+        onMemberRemoved,
+      )
+
+      connection.off(
+        'ConversationDeleted',
+        onConversationDeleted,
+      )
+
+      connection.off(
         'ReactionChanged',
         onReactionChanged,
       )
@@ -902,6 +1200,7 @@ const uploadAttachment = (
     }
   }, [
     service,
+    currentUserId,
     addMessage,
     loadConversations,
     upsertConversation,
@@ -927,6 +1226,14 @@ return {
   sending,
   reactingId,
   error,
+  removedBannerGroupName,
+  setRemovedBannerGroupName,
+  scope,
+  setScope,
+  notice,
+  setNotice,
+  unhideConversation,
+  restoreDissolvedGroup,
 
   // Hội thoại
   loadConversations,
@@ -934,6 +1241,12 @@ return {
   startDirectChat,
   createGroup,
   deleteConversation,
+  removeMember,
+  addMembers,
+  changeMemberRole,
+  transferOwnership,
+  updateConversationInfo,
+  archiveConversation,
 
   // Tin nhắn
   sendMessage,

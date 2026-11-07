@@ -3,6 +3,7 @@ import {
   ChatService,
   Message,
   MessageReactionType,
+  MessageType,
   ReplyPreview,
 } from 'src/services/chatService'
 
@@ -19,6 +20,22 @@ interface Props {
   nameOf: (userId: string) => string
   onReact: (message: Message, type: MessageReactionType) => void
   onReply: (message: Message) => void
+}
+
+const dayKey = (value: string) => {
+  const d = new Date(value)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+/** "Hôm nay" / "Hôm qua" / dd/MM/yyyy */
+const dayLabel = (value: string) => {
+  const d = new Date(value)
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  if (dayKey(value) === dayKey(today.toISOString())) return 'Hôm nay'
+  if (dayKey(value) === dayKey(yesterday.toISOString())) return 'Hôm qua'
+  return d.toLocaleDateString('vi-VN')
 }
 
 const MessageList: React.FC<Props> = ({
@@ -84,16 +101,27 @@ const MessageList: React.FC<Props> = ({
         const prev = messages[i - 1]
         const next = messages[i + 1]
         const isMine = m.senderId === currentUserId
-        const isFirst = !prev || prev.senderId !== m.senderId
+        const isFirst =
+          !prev ||
+          dayKey(prev.sentAt) !== dayKey(m.sentAt) ||
+          prev.messageType === MessageType.System ||
+          prev.senderId !== m.senderId
+        const isLast =
+          !next ||
+          next.messageType === MessageType.System ||
+          next.senderId !== m.senderId
         const senderLabel = m.senderName || nameOf(m.senderId)
 
+        const newDay = !prev || dayKey(prev.sentAt) !== dayKey(m.sentAt)
+
         return (
+          <React.Fragment key={m.id}>
+          {newDay && <div className="msg-date-divider">{dayLabel(m.sentAt)}</div>}
           <MessageItem
-            key={m.id}
             message={m}
             isMine={isMine}
             isFirstInGroup={isFirst}
-            isLastInGroup={!next || next.senderId !== m.senderId}
+            isLastInGroup={isLast}
             showSender={isGroup && !isMine && isFirst}
             senderLabel={senderLabel}
             avatarText={isGroup ? initialOf(senderLabel) : avatarText}
@@ -111,6 +139,7 @@ const MessageList: React.FC<Props> = ({
               onReact(m, type)
             }}
           />
+          </React.Fragment>
         )
       })}
     </section>

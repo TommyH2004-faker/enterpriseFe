@@ -1,5 +1,6 @@
-
 import React, { useEffect, useState } from 'react'
+import CIcon from '@coreui/icons-react'
+import { cilCloudDownload, cilDescription, cilX } from '@coreui/icons'
 import { ChatService, MessageAttachment } from 'src/services/chatService'
 
 export const formatSize = (bytes: number) => {
@@ -20,7 +21,6 @@ const AttachmentView: React.FC<Props> = ({ attachment, service }) => {
   const [failed, setFailed] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
 
-  // Tải ảnh đã gửi và tạo URL chỉ dùng trong component này.
   useEffect(() => {
     if (!isImage) return
 
@@ -51,7 +51,6 @@ const AttachmentView: React.FC<Props> = ({ attachment, service }) => {
     }
   }, [attachment.id, isImage, service])
 
-  // Đóng ảnh bằng phím Escape.
   useEffect(() => {
     if (!previewOpen) return
 
@@ -135,7 +134,7 @@ const AttachmentView: React.FC<Props> = ({ attachment, service }) => {
               title="Đóng"
               onClick={() => setPreviewOpen(false)}
             >
-              ×
+              <CIcon icon={cilX} size="lg" />
             </button>
 
             <div
@@ -151,6 +150,7 @@ const AttachmentView: React.FC<Props> = ({ attachment, service }) => {
                   type="button"
                   onClick={() => void download()}
                 >
+                  <CIcon icon={cilCloudDownload} size="sm" className="me-1" />
                   Tải xuống
                 </button>
               </div>
@@ -167,15 +167,20 @@ const AttachmentView: React.FC<Props> = ({ attachment, service }) => {
       className="msg-file"
       onClick={() => void download()}
     >
-      <span className="msg-file-icon">📄</span>
+      <span className="msg-file-icon">
+        <CIcon icon={cilDescription} size="lg" />
+      </span>
 
       <span className="msg-file-copy">
         <strong>{attachment.originalFileName}</strong>
         <small>{formatSize(attachment.fileSize)}</small>
+      </span>
+
+      <span className="msg-file-download">
+        <CIcon icon={cilCloudDownload} size="sm" />
       </span>
     </button>
   )
 }
 
 export default AttachmentView
-

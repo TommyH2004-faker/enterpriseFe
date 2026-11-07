@@ -21,6 +21,7 @@
 
 import React from 'react'
 import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
+import AIChatPage from 'src/views/pages/AIChat/Aichatpage'
 
 /**
  * DefaultLayout functional component
@@ -46,6 +47,7 @@ const DefaultLayout = () => {
         </div>
         <AppFooter />
       </div>
+      <AIChatPage />
     </div>
   )
 }

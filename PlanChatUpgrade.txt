@@ -1,0 +1,117 @@
+Kế hoạch nâng cấp chat nhóm - EnterpriseTaskManagement
+Phạm vi: Frontend D:\FeManagement và Backend D:\EnterpriseTaskManagement. Căn cứ: các file trong chat-context.txt và 4 file đã gửi trước đó.
+1. Xử lý ở đâu trước
+Làm Frontend trước, bắt đầu từ chatService.ts. Lý do:
+•	Giai đoạn 2, 3, 4 (xem thông tin nhóm, thêm/xóa/rời, đổi tên/mô tả) dùng các API Backend đã có sẵn, nên không cần sửa Backend. Sau mỗi thao tác thành công, Frontend gọi lại GET /api/v1/conversations/{id} để làm mới danh sách thành viên.
+•	Backend chỉ cần sửa cho Giai đoạn 5 (đồng bộ SignalR) và để chặn người bị xóa tiếp tục nhận tin nhắn.
+•	Riêng hai lỗi Backend nên sửa sớm vì ảnh hưởng dữ liệu và bảo mật: B1 (UpdateInfo ghi đè avatar/mô tả) và B3 + B5 (người bị xóa vẫn nhận tin realtime).
+Thứ tự tổng thể:
+1.	Xác nhận ChatHeader.tsx (F1, đã làm).
+2.	Frontend F2 → F9: giao diện và quản lý nhóm theo quyền.
+3.	Backend B1 → B8: sửa lỗi, phát event, chặn người bị xóa.
+4.	Frontend F10: lắng nghe event mới.
+5.	Kiểm thử hai tài khoản.
+6.	Tùy chọn: tin nhắn hệ thống (B9, F11).
+2. Các quyết định đã giả định (đổi được trước khi làm bước liên quan)
+#	Vấn đề	Giả định để không bị chặn việc
+D1	Xóa nhóm	Dùng archive (chỉ Owner), nút tên "Giải tán nhóm". Không thêm endpoint xóa cứng. Nhóm archive biến mất khỏi danh sách của mọi người.
+D2	Chặn người bị xóa nhận tin	Cách chuẩn: Backend theo dõi connection theo user và gỡ khỏi SignalR group. Lưu ý chỉ đúng khi chạy một instance server.
+D3	Chat Project và Department	Chỉ loại Group được thêm/xóa thành viên và đổi vai trò. Project/Department chỉ xem thông tin và rời nhóm, vì danh sách thành viên có thể gắn với dự án/phòng ban.
+D4	Tin nhắn hệ thống ("A đã thêm B")	Làm sau cùng, tùy chọn.
+3. Hiện trạng đã xác nhận
+3.1 Enum vai trò
+Owner = 1, Administrator = 2, Member = 3. Loại hội thoại: Direct = 1, Group = 2, Project = 3, Department = 4.
+3.2 Ma trận quyền (theo Conversation.cs, Frontend phải khớp)
+Thao tác	Owner	Administrator	Member	Ghi chú
+Thêm thành viên	Có	Có	Không	Không áp dụng chat 1-1, nhóm đã lưu trữ; tối đa 200 người
+Xóa Member	Có	Có	Không	
+Xóa Administrator	Có	Không	Không	Lỗi InsufficientRole
+Xóa Owner	Không	Không	Không	Lỗi CannotModifyOwner
+Rời nhóm	Có	Có	Có	Gọi RemoveMember với chính mình. Owner rời thì tự chuyển Owner cho Admin vào sớm nhất, không có Admin thì người vào sớm nhất
+Đổi tên, mô tả, avatar	Có	Có	Không	
+Đổi vai trò Admin/Member	Có	Không	Không	Không đặt được vai trò Owner qua API này
+Chuyển quyền Owner	Có	Không	Không	Owner cũ thành Administrator
+Lưu trữ (archive)	Có	Không	Không	
+Ẩn hội thoại (DELETE /{id})	Mọi người			Chỉ ẩn với riêng mình, không phải xóa nhóm
+3.3 API Backend và trạng thái phía Frontend
+Chức năng	Endpoint	Frontend
+Chi tiết nhóm (có Role, IsActive, JoinedAt)	GET /api/v1/conversations/{id}	Có method, thiếu trường role
+Thêm thành viên	POST /{id}/members body { userIds }, trả ConversationDetail	Thiếu method
+Xóa thành viên / rời nhóm	DELETE /{id}/members/{userId}, không trả data	Thiếu method
+Đổi tên / mô tả / avatar	PUT /{id} body { name, description, avatarUrl }, trả ConversationDetail	Thiếu method
+Đổi vai trò	PUT /{id}/members/{userId}/role body { role }	Thiếu method
+Chuyển Owner	POST /{id}/transfer-ownership body { newOwnerUserId }	Thiếu method
+Archive	POST /{id}/archive, POST /{id}/unarchive	Thiếu method
+Xóa nhóm cứng	Không có	Dùng archive (D1)
+3.4 SignalR hiện có
+•	Hub: ChatHub với JoinConversation, LeaveConversation, SendMessage, MarkAsRead, Typing, StopTyping. Mỗi user vào group user:{id}; mỗi hội thoại có group conversation:{id}.
+•	Event Frontend đã nghe: ConversationCreated, ConversationUpdated, MessageReceived, MessageEdited, MessageDeleted, ReactionChanged, UnreadChanged.
+•	Event Backend đã phát: MessageReceived, ConversationUpdated (khi có tin mới và khi tạo chat 1-1), UnreadChanged, ReactionChanged, ConversationDeleted (khi ẩn hội thoại, Frontend chưa nghe).
+•	IChatNotifier.MemberEventAsync đã khai báo và cài đặt nhưng không handler nào gọi.
+4. Vấn đề phát hiện
+#	Vấn đề	Mức độ	Xử lý ở
+P1	Người bị xóa khỏi nhóm vẫn nằm trong SignalR group conversation:{id} của kết nối đang mở nên vẫn nhận MessageReceived cho tới khi ngắt kết nối. JoinConversation có kiểm tra thành viên active nhưng kết nối cũ không bị đá ra	Cao (bảo mật)	B2, B3, B5, B8
+P2	UpdateInfo gán cả Description và AvatarUrl: chỉ gửi mô tả thì avatar bị xóa về null và ngược lại. Mô tả quá dài trả lỗi InvalidName (sai ngữ nghĩa)	Cao (mất dữ liệu)	B1
+P3	AddMembers, RemoveMember, UpdateConversation, ChangeMemberRole, TransferOwnership, Archive đều không phát event	Cao (Giai đoạn 5)	B4 - B8
+P4	Event ConversationUpdated hiện chỉ làm mới danh sách bên trái, không làm mới active đang mở nên danh sách thành viên bị cũ	Trung bình	F5, F10
+P5	Messages.tsx lọc members theo isActive rồi dùng cho nameOf, nên tin nhắn cũ của người đã rời hiện "Thành viên"	Trung bình	F8
+P6	errorText dùng e.message: với lỗi Axios là "Request failed with status code 403", không phải mô tả tiếng Việt của Backend (NotManager, OnlyOwner...)	Trung bình	F5 (cần xem axiosClient.ts, ApiController.cs)
+P7	Frontend chưa nghe ConversationDeleted	Thấp	F5
+P8	useChat.ts cleanup gọi connection.onreconnected(onReconnected) (đăng ký thêm, không hủy)	Thấp	F5
+P9	ConversationDetail của Backend không có MemberCount (Frontend tự tính từ members)	Thấp	ChatHeader đã xử lý
+P10	Cần kiểm tra: Rejoin() có bỏ cờ IsHidden không (người từng ẩn nhóm rồi được thêm lại có thấy nhóm không); MemberCount trong danh sách có chỉ đếm thành viên active không; enum Role serialize ra số hay chuỗi	Cần xác minh	Trước F2 và khi kiểm thử
+5. Kế hoạch Frontend (mỗi lần một file)
+Quy ước: sau mỗi file, kiểm tra TypeScript và xác nhận trước khi sang file tiếp theo.
+Bước	File	Việc cần làm	Phụ thuộc Backend
+F1	ChatHeader.tsx	Đã làm. Header riêng cho chat cá nhân/nhóm, nút thông tin qua prop onOpenInfo. Chờ bạn xác nhận	Không
+F2	chatService.ts	Thêm enum ConversationMemberRole; thêm role, joinedAt vào member của ConversationDetail; thêm type UpdateConversationRequest; thêm method: addMembers, removeMember (dùng cả cho rời nhóm), updateConversation, changeMemberRole, transferOwnership, archiveConversation. Chuẩn hóa role phòng khi Backend trả chuỗi	Không
+F3	utils/groupPermissions.ts (mới)	Hàm thuần tính quyền từ vai trò của mình và vai trò đối tượng: canAddMembers, canRemove, canRename, canChangeRole, canTransferOwner, canArchive, canLeave. Phản chiếu đúng ma trận mục 3.2; chat 1-1 và (theo D3) Project/Department bị giới hạn	Không
+F4	ConfirmDeleteModal.tsx	Thêm prop tùy chọn (tiêu đề, nội dung, nhãn nút xác nhận); giữ mặc định cũ để chức năng ẩn hội thoại không đổi	Không
+F5	useChat.ts (đợt 1)	Thêm refreshActive (gọi lại getConversation và cập nhật active); thêm các action quản lý nhóm trả về chuỗi lỗi hoặc null (cùng kiểu createGroup, deleteConversation) và gọi refreshActive + loadConversations sau khi thành công; xử lý khi chính mình rời/bị xóa (đóng nhóm, xóa khỏi danh sách); trích thông báo lỗi tiếng Việt từ response Backend (P6); đăng ký ConversationDeleted (P7); bỏ dòng cleanup onreconnected sai (P8)	Không
+F6	GroupInfoModal.tsx (mới)	Giai đoạn 2, 3, 4: tên, mô tả, số thành viên, avatar; danh sách thành viên kèm huy hiệu Owner/Admin/Member; menu thao tác theo quyền (xóa, đổi vai trò, chuyển Owner); sửa tên/mô tả; nút Rời nhóm; nút Giải tán nhóm (Owner). Mọi thao tác quan trọng qua ConfirmDeleteModal. Khi cập nhật mô tả, luôn gửi kèm avatar hiện tại (và ngược lại) để tránh P2 trước khi Backend sửa B1	Không
+F7	AddMembersModal.tsx (mới)	Chọn nhân viên (dùng lại useEmployeeSearch, theo mẫu CreateGroupModal); ẩn người đã là thành viên active; hiển thị giới hạn 200	Không
+F8	Messages.tsx	Tách allMembers (để hiện tên, sửa P5) và activeMembers (để tag, đếm); tính myRole; truyền onOpenInfo cho ChatHeader; nối hai modal mới; xóa 3 dòng console.log debug	Không
+F9	scss/chat.scss	Style huy hiệu vai trò, danh sách thành viên, modal, nút trong header	Không
+F10	useChat.ts (đợt 2)	Giai đoạn 5: lắng nghe các event mới theo hợp đồng ở mục 7; khi nhận event của nhóm đang mở thì refreshActive; khi bị xóa khỏi nhóm thì đóng nhóm, gọi LeaveConversation, báo thông báo	Cần B2 - B8
+F11	MessageItem.tsx / MessageList.tsx	Hiển thị tin nhắn System (chỉ nếu làm D4)	Cần B9
+6. Kế hoạch Backend
+Quy ước: build và chạy thử sau mỗi file; không đổi cấu trúc ngoài danh sách này khi chưa thống nhất.
+Bước	File	Việc cần làm
+B1	Domain/Entities/Communication/Conversation.cs	Sửa UpdateInfo: chỉ cập nhật trường nào được gửi (null thì giữ nguyên). Mô tả quá dài trả lỗi riêng thay vì InvalidName (thêm vào ChatErrors.cs)
+B2	Application/Repositories/IChatNotifier.cs, API/Hubs/ChatNotifier.cs	Thêm phương thức phát event nhóm theo từng user (qua group user:{id}) và phương thức gỡ user khỏi group conversation:{id}
+B3	Mới: bộ theo dõi kết nối (ví dụ ChatConnectionTracker), API/Hubs/ChatHub.cs, đăng ký DI	Lưu userId → connectionIds trong OnConnectedAsync / OnDisconnectedAsync để B2 gỡ đúng kết nối. Đăng ký singleton. Lưu ý: bộ nhớ trong chỉ đúng khi chạy một instance server; nếu scale ngang cần phương án khác
+B4	Features/Chat/Commands/AddMembers/AddMembersCommandHandler.cs	Sau SaveChanges: phát ConversationUpdated cho người mới (kèm detail) và thành viên cũ
+B5	Features/Chat/Commands/RemoveMember/RemoveMemberCommandHandler.cs	Sau SaveChanges: phát ConversationMemberRemoved cho người bị xóa/rời, gỡ khỏi group, phát ConversationUpdated cho thành viên còn lại
+B6	Features/Chat/Commands/UpdateConversation/UpdateConversationCommandHandler.cs	Thêm audit (các handler khác đã có, handler này chưa) và phát ConversationUpdated cho mọi thành viên active
+B7	ChangeMemberRoleCommandHandler.cs, TransferOwnershipCommandHandler.cs	Phát ConversationUpdated cho mọi thành viên active
+B8	Features/Chat/Commands/ArchiveConversation/ArchiveConversationCommandHandler.cs	Phát ConversationDeleted (đã có sẵn) cho mọi thành viên, gỡ khỏi group
+B9	Tùy chọn (D4)	Sinh tin nhắn MessageType.System khi thêm/xóa/rời/đổi tên nhóm
+7. Hợp đồng event SignalR (thống nhất trước khi làm B2 và F10)
+Event	Gửi tới	Payload	Frontend làm gì
+ConversationUpdated (giữ nguyên tên)	Mọi thành viên active của nhóm	{ conversationId, reason } hoặc detail đầy đủ	Nạp lại danh sách; nếu đang mở nhóm đó thì làm mới detail
+ConversationMemberRemoved (mới)	Người bị xóa hoặc vừa rời	{ conversationId, reason }	Đóng nhóm đang mở, xóa khỏi danh sách, báo thông báo
+ConversationDeleted (có sẵn)	Mọi thành viên khi archive; chính user khi ẩn	conversationId	Giống dòng trên
+Giữ ConversationUpdated làm event chung để Frontend hiện tại không bị phá: handler cũ vốn đã tự nạp lại danh sách khi payload không đúng dạng list item. Mỗi reason nên là giá trị cố định (ví dụ member_added, member_removed, role_changed, info_updated) để Frontend quyết định có cần làm mới detail hay không.
+8. Kiểm thử
+Nhóm	Nội dung
+Chat 1-1	Không thấy nút thông tin nhóm. Gửi tin, trả lời, đính kèm, reaction, mention, ẩn hội thoại vẫn bình thường
+Tạo nhóm	Người tạo là Owner, danh sách thành viên đúng
+Quyền	Với từng vai trò Owner, Administrator, Member: nút nào hiện, thao tác nào bị Backend từ chối. Admin không xóa được Admin khác, không ai xóa được Owner
+Rời nhóm	Member rời; Owner rời thì quyền chuyển đúng người theo luật Backend; nhóm không còn ai thì bị archive
+Thêm lại người đã rời	Thấy lại nhóm; thử cả người từng ẩn nhóm (P10)
+Chỉnh thông tin	Sửa mô tả không làm mất avatar và ngược lại (P2); mô tả quá dài báo đúng lỗi
+Hai tài khoản đồng thời	Thêm, xóa, rời, đổi tên, đổi vai trò, chuyển Owner, archive ở máy A thì máy B tự cập nhật không cần tải lại
+Bảo mật	Sau khi bị xóa, tài khoản đó không nhận thêm tin nhắn mới của nhóm (P1)
+Hiển thị tên	Tin nhắn cũ của người đã rời vẫn hiện đúng tên (P5)
+Thông báo lỗi	Thao tác bị từ chối hiện mô tả tiếng Việt từ Backend (P6)
+Hồi quy	Reconnect SignalR, đếm chưa đọc, danh sách hội thoại và tìm kiếm không đổi hành vi
+9. Tiêu chí hoàn thành
+•	Chat cá nhân và chat nhóm phân biệt rõ trên giao diện.
+•	Xem được thông tin nhóm và thao tác đúng theo ma trận quyền; nút không có quyền thì không hiện, và Backend vẫn từ chối nếu bị gọi trực tiếp.
+•	Thêm, xóa, rời nhóm, đổi tên, đổi mô tả, giải tán nhóm hoạt động đúng, có hộp thoại xác nhận cho thao tác quan trọng.
+•	SignalR đồng bộ giữa các tài khoản; người bị xóa không còn nhận tin.
+•	Không phát sinh lỗi ở gửi tin, trả lời, đính kèm, reaction, SignalR hiện tại.
+10. Việc cần từ bạn
+1.	Xác nhận F1 (ChatHeader.tsx) hiển thị đúng; đổi giả định D1 - D4 nếu không đồng ý.
+2.	Gửi thêm 3 file nhỏ để chốt P6 và P10: ApiController.cs, axiosClient.ts và đoạn cấu hình JSON (kiểu serialize enum) trong Program.cs.
+3.	Cho phép bắt đầu từ F2: chatService.ts.

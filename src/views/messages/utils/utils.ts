@@ -25,11 +25,50 @@ export const getCurrentUserId = () => {
   }
 }
 
-export const initialOf = (value: string) =>
-  value.trim().charAt(0).toUpperCase() || '?'
+export const initialOf = (value: string) => {
+  const parts = value.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
 
 export const formatTime = (value: string) =>
   new Date(value).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+
+export const formatConversationTime = (value?: string | null) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return ''
+  const now = new Date()
+
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+
+  if (isToday) {
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+
+  if (isYesterday) {
+    return 'Hôm qua'
+  }
+
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 7) {
+    const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7']
+    return days[date.getDay()]
+  }
+
+  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`
+}
 
 export const notifyUnreadChanged = () =>
   window.dispatchEvent(new Event('chat:unread-changed'))
