@@ -20,7 +20,7 @@ export const LabelSection: React.FC<LabelSectionProps> = ({ projectLabels, taskL
   const [newLabelName, setNewLabelName] = useState('')
   const [newLabelColor, setNewLabelColor] = useState('#0d6efd')
 
-  const activeLabels = useMemo(() => projectLabels.filter((l) => l.isActive), [projectLabels])
+  const activeLabels = projectLabels
   const assignedIds = useMemo(() => new Set(taskLabels.map((l) => l.labelId)), [taskLabels])
 
   const handleCreateLabel = () => {

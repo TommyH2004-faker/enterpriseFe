@@ -58,6 +58,7 @@ const _nav = [
     name: 'Quản lý chức vụ phòng ban',
     to: '/positionuser',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+    permission: 'POSITION.VIEW',
   },
  {
   component: CNavGroup,
@@ -68,18 +69,20 @@ const _nav = [
       component: CNavItem,
       name: 'Vai trò',
       to: '/roles',
+      permission: 'ROLE.VIEW',
     },
     {
       component: CNavItem,
       name: 'Quyền',
       to: '/permissions',
+      permission: 'PERMISSION.VIEW',
     },
     {
       component: CNavItem,
-      name: 'Quản lý  người dùng',
+      name: 'Quản lý người dùng',
       to: '/users',
+      permission: 'USER.VIEW',
     }
-    
   ],
 },
   {
@@ -97,6 +100,7 @@ const _nav = [
     name: 'Quản lý phiên',
     to: '/sessions',
     icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
+    roles: ['SUPER_ADMIN', 'ADMINS'],
   },
   {
     component: CNavItem,
@@ -109,6 +113,7 @@ const _nav = [
     name: 'Nhật ký kiểm toán',
     to: '/audit',
     icon: <CIcon icon={cilShieldAlt} customClassName="nav-icon" />,
+    permission: 'AUDIT_LOG.VIEW',
   },
  
   {
@@ -122,6 +127,7 @@ const _nav = [
     name: 'Báo cáo',
     to: '/reports',
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
+    permission: 'REPORT.VIEW',
   },
 ]
 

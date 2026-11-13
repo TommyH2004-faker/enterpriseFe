@@ -12,6 +12,7 @@ import {
   Message,
   MessageReactionType,
   SendMessagePayload,
+  UserPresence,
 } from 'src/services/chatService'
 import {
   apiBaseUrl,
@@ -62,6 +63,33 @@ export const useChat = () => {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<{ id: string; text: string; undoId?: string } | null>(null)
   const [removedBannerGroupName, setRemovedBannerGroupName] = useState<string | null>(null)
+  const [presences, setPresences] = useState<Map<string, UserPresence>>(new Map())
+
+  const onlineUserIds = useMemo(() => {
+    const set = new Set<string>()
+    presences.forEach((p, uid) => {
+      if (p.isOnline) set.add(uid)
+    })
+    return set
+  }, [presences])
+
+  const isUserOnline = useCallback(
+    (userId?: string | null) => {
+      if (!userId) return false
+      return presences.get(userId.toLowerCase())?.isOnline ?? false
+    },
+    [presences],
+  )
+
+  const getUserLastSeen = useCallback(
+    (userId?: string | null, fallback?: string | null) => {
+      if (!userId) return fallback ?? null
+      const p = presences.get(userId.toLowerCase())
+      if (p?.lastSeenAt) return p.lastSeenAt
+      return fallback ?? null
+    },
+    [presences],
+  )
 
   useEffect(() => {
     conversationsRef.current = conversations
@@ -1117,6 +1145,33 @@ const uploadAttachment = (
       onUnread,
     )
 
+    const onUserPresenceChanged = ({
+      userId,
+      isOnline,
+      lastSeenAt,
+    }: {
+      userId: string
+      isOnline: boolean
+      lastSeenAt?: string | null
+    }) => {
+      if (!userId) return
+      const key = userId.toLowerCase()
+      setPresences((prev) => {
+        const next = new Map(prev)
+        next.set(key, {
+          userId: key,
+          isOnline,
+          lastSeenAt: lastSeenAt ?? (isOnline ? null : (prev.get(key)?.lastSeenAt || new Date().toISOString())),
+        })
+        return next
+      })
+    }
+
+    connection.on(
+      'UserPresenceChanged',
+      onUserPresenceChanged,
+    )
+
     connection.onreconnected(
       onReconnected,
     )
@@ -1127,6 +1182,41 @@ const uploadAttachment = (
 
     void connection
       .start()
+      .then(async () => {
+        try {
+          const presenceList = await connection.invoke<Array<{ userId: string; isOnline: boolean; lastSeenAt?: string | null }>>('GetPresences')
+          if (Array.isArray(presenceList)) {
+            setPresences((prev) => {
+              const next = new Map(prev)
+              for (const p of presenceList) {
+                if (p?.userId) {
+                  next.set(p.userId.toLowerCase(), {
+                    userId: p.userId.toLowerCase(),
+                    isOnline: p.isOnline,
+                    lastSeenAt: p.lastSeenAt,
+                  })
+                }
+              }
+              return next
+            })
+          } else {
+            const list = await connection.invoke<string[]>('GetOnlineUsers')
+            if (Array.isArray(list)) {
+              setPresences((prev) => {
+                const next = new Map(prev)
+                for (const id of list) {
+                  if (id) {
+                    next.set(id.toLowerCase(), { userId: id.toLowerCase(), isOnline: true, lastSeenAt: null })
+                  }
+                }
+                return next
+              })
+            }
+          }
+        } catch {
+          // Ignore presence fetch errors gracefully
+        }
+      })
       .catch((e) => {
         setError(
           errorText(
@@ -1141,6 +1231,11 @@ const uploadAttachment = (
        ======================================================= */
 
     return () => {
+      connection.off(
+        'UserPresenceChanged',
+        onUserPresenceChanged,
+      )
+
       connection.off(
         'ConversationCreated',
         onConversation,
@@ -1214,6 +1309,10 @@ const uploadAttachment = (
 return {
   service,
   currentUserId,
+  presences,
+  onlineUserIds,
+  isUserOnline,
+  getUserLastSeen,
 
   conversations,
   active,

@@ -3,7 +3,7 @@ import './components/Aichatwidget.css'
 import { usePersistentState } from './hooks/Usepersistentstate'
 import { aiChatConfig } from 'src/api/Aichat.config'
 
-import { useAIChat } from './hooks/Useaichat '
+import { useAIChat } from './hooks/useAIChat'
 import ChatPanel from './components/Chatpanel'
 import ChatLauncher from './components/Chatlauncher'
 import { ChatView } from 'src/types/Aichat'

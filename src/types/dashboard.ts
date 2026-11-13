@@ -20,3 +20,21 @@ export interface DashboardSummaryDto {
   tasksByStatus: DashboardTaskStatusDto[]
   tasksByPriority: DashboardTaskPriorityDto[]
 }
+
+export interface DashboardWeeklyTrendDto {
+  weekNumber: number
+  weekLabel: string
+  startDate: string
+  endDate: string
+  tasksCreated: number
+  tasksCompleted: number
+  tasksInProgress: number
+  completionRate: number
+}
+
+export interface DashboardWeeklyTrendResponse {
+  totalTasksCreated: number
+  totalTasksCompleted: number
+  averageCompletionRate: number
+  weeks: DashboardWeeklyTrendDto[]
+}

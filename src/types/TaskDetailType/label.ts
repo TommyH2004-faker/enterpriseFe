@@ -6,7 +6,6 @@ export interface ProjectLabelResponse {
   name: string
   color: string
   description: string
-  isActive: boolean
 }
 
 export interface CreateProjectLabelRequest {

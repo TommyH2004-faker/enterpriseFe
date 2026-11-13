@@ -1,7 +1,8 @@
 
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd'
+import { useProjectRealtime } from 'src/hooks/useProjectRealtime'
 import {
   CButton,
   CCard,
@@ -56,6 +57,7 @@ const KanbanBoard: React.FC = () => {
     openCreateTaskModal,
     closeCreateTaskModal,
     loadBoard,
+    silentSyncProjectBoard,
     onDragEnd,
     createBoard,
     createTask,
@@ -69,48 +71,66 @@ const KanbanBoard: React.FC = () => {
   const [taskToDelete, setTaskToDelete] = useState<KanbanTask | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
+  const loadProjectAuxData = useCallback(async () => {
     if (!projectId) {
       setProjectMembers([])
       setProjectLabels([])
       return
     }
 
-    const loadProjectData = async () => {
-      // --- TẢI THÀNH VIÊN ---
-      try {
-        const members = await projectService.getProjectMembers(projectId)
-        setProjectMembers(members)
-      } catch (error) {
-        console.error('Không thể tải thành viên dự án:', error)
-        setProjectMembers([])
-      }
-
-      // --- TẢI LABELS CHO CREATE TASK MODAL ---
-      try {
-        const labels = await labelService.getProjectLabels(projectId)
-        const rawLabels = Array.isArray(labels)
-          ? labels
-          : (labels as any)?.data?.data || (labels as any)?.data || []
-
-        if (Array.isArray(rawLabels)) {
-          const mappedLabels = rawLabels
-            .filter((l: any) => l.isActive !== false)
-            .map((l: any) => ({
-              id: l.id,
-              name: l.name,
-              color: l.color || '#0d6efd',
-            }))
-          setProjectLabels(mappedLabels)
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải labels:', error)
-        setProjectLabels([])
-      }
+    try {
+      const members = await projectService.getProjectMembers(projectId)
+      setProjectMembers(members)
+    } catch (error) {
+      console.error('Không thể tải thành viên dự án:', error)
     }
 
-    loadProjectData()
+    try {
+      const labels = await labelService.getProjectLabels(projectId)
+      const rawLabels = Array.isArray(labels)
+        ? labels
+        : (labels as any)?.data?.data || (labels as any)?.data || []
+
+      if (Array.isArray(rawLabels)) {
+        const mappedLabels = rawLabels
+          .map((l: any) => ({
+            id: l.id,
+            name: l.name,
+            color: l.color || '#0d6efd',
+          }))
+        setProjectLabels(mappedLabels)
+      }
+    } catch (error) {
+      console.error('Lỗi khi tải labels:', error)
+    }
   }, [projectId])
+
+  useEffect(() => {
+    void loadProjectAuxData()
+  }, [loadProjectAuxData])
+
+  // --- Đồng bộ Realtime khi có người khác sửa cùng Project / Kanban ---
+  const { viewers } = useProjectRealtime({
+    projectId,
+    isBusy: isDragging,
+    onProjectChanged: (payload) => {
+      if (
+        payload.eventType.includes('Project') ||
+        payload.eventType.includes('Board') ||
+        payload.eventType === 'ConcurrencyConflict'
+      ) {
+        void silentSyncProjectBoard(payload.boardId)
+      } else if (board?.id) {
+        void loadBoard(board.id, projectId, { silent: true })
+      } else {
+        void silentSyncProjectBoard(payload.boardId)
+      }
+
+      if (payload.eventType.includes('Label') || payload.eventType.includes('Member')) {
+        void loadProjectAuxData()
+      }
+    },
+  })
 
   /** Tạo label mới cho dự án rồi reload danh sách */
   const handleCreateLabel = async (name: string, color: string) => {
@@ -121,9 +141,7 @@ const KanbanBoard: React.FC = () => {
       const rawLabels = response?.data?.data || response?.data || response || []
       if (Array.isArray(rawLabels)) {
         setProjectLabels(
-          rawLabels
-            .filter((l: any) => l.isActive)
-            .map((l: any) => ({ id: l.id, name: l.name, color: l.color || '#0d6efd' })),
+          rawLabels.map((l: any) => ({ id: l.id, name: l.name, color: l.color || '#0d6efd' })),
         )
       }
     } catch (err) {
@@ -190,6 +208,7 @@ const KanbanBoard: React.FC = () => {
         boardLoading={boardLoading}
         search={search}
         priority={priority}
+        viewers={viewers}
         onSelectBoard={(boardId) => void loadBoard(boardId)}
         onOpenCreateBoard={() => setCreateBoardVisible(true)}
         onOpenCreateTask={() => openCreateTaskModal()}
@@ -270,7 +289,7 @@ const KanbanBoard: React.FC = () => {
         onClose={closeTaskModal}
         onChanged={() => {
           if (board?.id) {
-            void loadBoard(board.id)
+            void loadBoard(board.id, projectId, { silent: true })
           }
         }}
       />

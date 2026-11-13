@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import CIcon from '@coreui/icons-react'
 import { cilInfo, cilUserPlus } from '@coreui/icons'
 import {
@@ -7,11 +7,14 @@ import {
   ConversationType,
 } from 'src/services/chatService'
 import { getGroupPermissions, normalizeRole } from '../utils/groupPermissions'
+import { formatLastSeen } from '../utils/utils'
 import ConversationAvatar from './ConversationAvatar'
 
 interface Props {
   conversation: ConversationDetail
   currentUserId?: string
+  isUserOnline?: (userId?: string | null) => boolean
+  getUserLastSeen?: (userId?: string | null, fallback?: string | null) => string | null
   onOpenInfo?: () => void
   onOpenAddMembers?: () => void
 }
@@ -19,6 +22,8 @@ interface Props {
 const ChatHeader: React.FC<Props> = ({
   conversation,
   currentUserId,
+  isUserOnline,
+  getUserLastSeen,
   onOpenInfo,
   onOpenAddMembers,
 }) => {
@@ -32,6 +37,21 @@ const ChatHeader: React.FC<Props> = ({
   const myRole = normalizeRole(me?.role ?? ConversationMemberRole.Member)
   const perm = getGroupPermissions(conversation.conversationType, myRole)
 
+  // Thông tin người nhận nếu là cuộc trò chuyện 1-1
+  const otherMember = activeMembers.find(
+    (m) => currentUserId && m.userId.toLowerCase() !== currentUserId.toLowerCase(),
+  )
+  const otherUserId = conversation.otherUserId || otherMember?.userId
+  const isDirectOnline = otherUserId && isUserOnline ? isUserOnline(otherUserId) : false
+  const fallbackLastLogin = conversation.otherUserLastLoginAt || otherMember?.lastLoginAt
+  const lastSeenAt = otherUserId && getUserLastSeen ? getUserLastSeen(otherUserId, fallbackLastLogin) : fallbackLastLogin
+
+  // Số lượng thành viên đang online trong nhóm
+  const onlineGroupMembersCount = useMemo(() => {
+    if (!isUserOnline || isDirect) return 0
+    return activeMembers.filter((m) => isUserOnline(m.userId)).length
+  }, [activeMembers, isUserOnline, isDirect])
+
   return (
     <header className="thread-header">
       <div className="thread-header-info">
@@ -41,6 +61,7 @@ const ChatHeader: React.FC<Props> = ({
           avatarUrl={conversation.avatarUrl}
           size="md"
           showBadge={!isDirect}
+          isOnline={isDirect ? isDirectOnline : false}
         />
 
         <div className="thread-meta">
@@ -49,10 +70,23 @@ const ChatHeader: React.FC<Props> = ({
           </h2>
 
           {isDirect ? (
-            <div className="thread-subtitle">Chat riêng</div>
+            <div className="thread-subtitle">
+              {isDirectOnline ? (
+                <span className="status-online">
+                  <span className="status-dot-green" /> Đang hoạt động
+                </span>
+              ) : (
+                <span className="status-offline">
+                  <span className="status-dot-gray" /> {formatLastSeen(lastSeenAt)}
+                </span>
+              )}
+            </div>
           ) : (
             <div className="thread-subtitle">
               <strong>Nhóm</strong> · {activeMembersCount} thành viên
+              {onlineGroupMembersCount > 0 && (
+                <span className="group-online-count"> ({onlineGroupMembersCount} đang hoạt động)</span>
+              )}
             </div>
           )}
         </div>

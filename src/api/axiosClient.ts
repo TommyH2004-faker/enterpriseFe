@@ -4,9 +4,11 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios'
 import { authStorage } from '../services/authStorage'
+import { API_BASE_URL } from '../config/env'
+import toast from 'react-hot-toast'
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   timeout: 10000,
 })
@@ -76,6 +78,25 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config as RetryableConfig | undefined
 
     if (!originalRequest) return Promise.reject(error)
+
+    // 409 Conflict: Xung đột cập nhật đồng thời (Optimistic Concurrency xmin)
+    if (error.response?.status === 409) {
+      const msg =
+        (error.response.data as any)?.message ||
+        'Dữ liệu này vừa được một thành viên khác cập nhật. Hệ thống đang đồng bộ lại phiên bản mới nhất.'
+      toast.error(msg, { id: 'concurrency-conflict' })
+      window.dispatchEvent(new CustomEvent('app:concurrency-conflict'))
+      return Promise.reject(error)
+    }
+
+    // 429 Too Many Requests: Vượt giới hạn Rate Limiting
+    if (error.response?.status === 429) {
+      const msg =
+        (error.response.data as any)?.message ||
+        'Bạn thao tác quá nhanh. Vui lòng đợi ít phút rồi thử lại.'
+      toast.error(msg, { id: 'rate-limit-exceeded' })
+      return Promise.reject(error)
+    }
 
     // 403: đã đăng nhập nhưng không đủ quyền.
     if (error.response?.status === 403) {

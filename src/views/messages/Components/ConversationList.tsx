@@ -23,6 +23,8 @@ interface Props {
   loading: boolean
   query: string
   scope: ConversationScope
+  isUserOnline?: (userId?: string | null) => boolean
+  getUserLastSeen?: (userId?: string | null, fallback?: string | null) => string | null
   onScopeChange: (scope: ConversationScope) => void
   onQueryChange: (value: string) => void
   onSelect: (item: ConversationListItem) => void
@@ -46,6 +48,8 @@ const ConversationList: React.FC<Props> = ({
   loading,
   query,
   scope,
+  isUserOnline,
+  getUserLastSeen,
   onScopeChange,
   onQueryChange,
   onSelect,
@@ -188,6 +192,8 @@ const ConversationList: React.FC<Props> = ({
               ? 'Tin nhắn đã bị thu hồi'
               : item.lastMessage?.content || 'Chưa có tin nhắn'
 
+            const isOnline = isDirect && item.otherUserId && isUserOnline ? isUserOnline(item.otherUserId) : false
+
             return (
               <div key={item.id} className="conversation-row-wrap">
                 <button
@@ -203,6 +209,7 @@ const ConversationList: React.FC<Props> = ({
                     avatarUrl={item.avatarUrl}
                     size="md"
                     showBadge={!isDirect}
+                    isOnline={isOnline}
                   />
                   <span className="conversation-copy">
                     <strong>{item.name || (isDirect ? 'Cuộc trò chuyện riêng' : 'Nhóm chat')}</strong>

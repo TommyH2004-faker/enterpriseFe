@@ -12,8 +12,9 @@ import {
   CTableRow,
 } from "@coreui/react";
 import CIconComponent from "@coreui/icons-react";
-import { cilBuilding, cilPencil, cilTrash } from "@coreui/icons";
+import { cilBuilding, cilPencil, cilPeople, cilTrash } from "@coreui/icons";
 import { DepartmentResponse } from "../../types/Department";
+import { authStorage } from "../../services/authStorage";
 
 const colors = [
   "#321FDB",
@@ -32,6 +33,7 @@ interface Props {
   onSelect: (id: string) => void;
   onEdit: (department: DepartmentResponse) => void;
   onDelete: (id: string) => void;
+  onViewMembers: (department: DepartmentResponse) => void;
 }
 const formatDate = (date: string) => new Date(date).toLocaleDateString("vi-VN");
 
@@ -44,8 +46,14 @@ const DepartmentContent: React.FC<Props> = ({
   onSelect,
   onEdit,
   onDelete,
-}) =>
-  viewMode === "list" ? (
+  onViewMembers,
+}) => {
+  const canEdit =
+    authStorage.hasPermission("DEPARTMENT.UPDATE") || authStorage.isAdmin();
+  const canDelete =
+    authStorage.hasPermission("DEPARTMENT.DELETE") || authStorage.isAdmin();
+
+  return viewMode === "list" ? (
     <div className="table-responsive">
       <CTable hover className="mb-0 align-middle border-top">
         <CTableHead>
@@ -127,23 +135,38 @@ const DepartmentContent: React.FC<Props> = ({
                 <CButton
                   color="light"
                   size="sm"
-                  className="border-0 text-primary me-1"
-                  title="Chỉnh sửa"
-                  onClick={() => onEdit(department)}
+                  className="border-0 text-success me-1"
+                  title="Quản lý thành viên"
+                  onClick={() => onViewMembers(department)}
                   disabled={loading}
                 >
-                  <CIconComponent icon={cilPencil} />
+                  <CIconComponent icon={cilPeople} className="me-1" />
+                  <span className="small d-none d-md-inline">Thành viên</span>
                 </CButton>
-                <CButton
-                  color="light"
-                  size="sm"
-                  className="border-0 text-danger"
-                  title="Xóa"
-                  onClick={() => onDelete(department.id)}
-                  disabled={loading}
-                >
-                  <CIconComponent icon={cilTrash} />
-                </CButton>
+                {canEdit && (
+                  <CButton
+                    color="light"
+                    size="sm"
+                    className="border-0 text-primary me-1"
+                    title="Chỉnh sửa"
+                    onClick={() => onEdit(department)}
+                    disabled={loading}
+                  >
+                    <CIconComponent icon={cilPencil} />
+                  </CButton>
+                )}
+                {canDelete && (
+                  <CButton
+                    color="light"
+                    size="sm"
+                    className="border-0 text-danger"
+                    title="Xóa"
+                    onClick={() => onDelete(department.id)}
+                    disabled={loading}
+                  >
+                    <CIconComponent icon={cilTrash} />
+                  </CButton>
+                )}
               </CTableDataCell>
             </CTableRow>
           ))}
@@ -206,26 +229,45 @@ const DepartmentContent: React.FC<Props> = ({
                   Ngày tạo: {formatDate(department.createdAt)}
                 </div>
               </div>
-              <div className="px-4 pb-4 d-flex gap-2">
+              <div className="px-4 pb-4 d-flex flex-column gap-2">
                 <CButton
-                  color="primary"
+                  color="success"
                   variant="outline"
                   size="sm"
-                  className="flex-grow-1"
-                  onClick={() => onEdit(department)}
+                  className="w-100 d-flex align-items-center justify-content-center gap-1"
+                  onClick={() => onViewMembers(department)}
                   disabled={loading}
                 >
-                  Chỉnh sửa
+                  <CIconComponent icon={cilPeople} />
+                  Quản lý thành viên
                 </CButton>
-                <CButton
-                  color="danger"
-                  size="sm"
-                  className="flex-grow-1 text-white"
-                  onClick={() => onDelete(department.id)}
-                  disabled={loading}
-                >
-                  Xóa
-                </CButton>
+                {(canEdit || canDelete) && (
+                  <div className="d-flex gap-2">
+                    {canEdit && (
+                      <CButton
+                        color="primary"
+                        variant="outline"
+                        size="sm"
+                        className="flex-grow-1"
+                        onClick={() => onEdit(department)}
+                        disabled={loading}
+                      >
+                        Chỉnh sửa
+                      </CButton>
+                    )}
+                    {canDelete && (
+                      <CButton
+                        color="danger"
+                        size="sm"
+                        className="flex-grow-1 text-white"
+                        onClick={() => onDelete(department.id)}
+                        disabled={loading}
+                      >
+                        Xóa
+                      </CButton>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CCol>
@@ -233,5 +275,6 @@ const DepartmentContent: React.FC<Props> = ({
       </CRow>
     </div>
   );
+};
 
 export default DepartmentContent;

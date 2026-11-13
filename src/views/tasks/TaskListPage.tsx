@@ -163,7 +163,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({ projectId: projectIdProp })
     }
 
     labelService.getProjectLabels(currentProjectId)
-      .then((result) => setLabels(result.filter((label) => label.isActive !== false).map((label) => ({
+      .then((result) => setLabels(result.map((label) => ({
         id: label.id,
         name: label.name,
         color: label.color || '#0d6efd',
@@ -194,7 +194,7 @@ const TaskListPage: React.FC<TaskListPageProps> = ({ projectId: projectIdProp })
     try {
       await labelService.createLabel(currentProjectId, { name, color })
       const result = await labelService.getProjectLabels(currentProjectId)
-      setLabels(result.filter((label) => label.isActive !== false).map((label) => ({
+      setLabels(result.map((label) => ({
         id: label.id,
         name: label.name,
         color: label.color || '#0d6efd',

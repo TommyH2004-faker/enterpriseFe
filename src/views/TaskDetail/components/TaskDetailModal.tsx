@@ -6,6 +6,10 @@ import { cilTask } from '@coreui/icons'
 import toast from 'react-hot-toast'
 
 import { useTaskDetail } from '../hooks/useTaskDetail'
+import {
+  PROJECT_REALTIME_CHANGED_EVENT,
+  ProjectRealtimePayload,
+} from 'src/hooks/useNotificationConnection'
 import { ActivitySection } from './ActivitySection'
 import { AttachmentSection } from './AttachmentSection'
 import { ChecklistSection } from './ChecklistSection'
@@ -63,6 +67,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const {
     task, checklists, comments, attachments, projectLabels, taskLabels, projectMembers, activities,
     assigneeIds, assigneeInitialized, loading, actionLoading, error,
+    silentRefresh,
     updateTask, updateAssignees, updateAssigneeSelection, moveTask,
     createChecklist, updateChecklist, deleteChecklist, completeChecklist,
     createChecklistItem, updateChecklistItem, deleteChecklistItem, completeChecklistItem, changeChecklistItemOrder,
@@ -115,6 +120,29 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       savedAssigneeIds.current = []
     }
   }, [visible])
+
+  // Đồng bộ Realtime ngay trong cửa sổ chi tiết khi đồng nghiệp bình luận / sửa checklist / sửa task
+  useEffect(() => {
+    if (!visible || !taskId || !projectId) return
+    let timer: number | null = null
+
+    const handleRealtime = (e: Event) => {
+      const detail = (e as CustomEvent<ProjectRealtimePayload>).detail
+      if (!detail || detail.projectId?.toLowerCase() !== projectId.toLowerCase()) return
+      if (detail.taskId && detail.taskId.toLowerCase() !== taskId.toLowerCase()) return
+
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        void silentRefresh()
+      }, 200)
+    }
+
+    window.addEventListener(PROJECT_REALTIME_CHANGED_EVENT, handleRealtime)
+    return () => {
+      if (timer) window.clearTimeout(timer)
+      window.removeEventListener(PROJECT_REALTIME_CHANGED_EVENT, handleRealtime)
+    }
+  }, [visible, taskId, projectId, silentRefresh])
 
   const isAssigneeDirty = () =>
     assigneeInitialized && !sameIds(assigneeIds, savedAssigneeIds.current)

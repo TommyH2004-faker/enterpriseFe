@@ -22,6 +22,7 @@ import { projectService } from 'src/services/projectService'
 import {
   useProjects,
 } from './hooks/useProjects'
+import { useProjectsListRealtime } from 'src/hooks/useProjectRealtime'
 
 import {
   useProjectForm,
@@ -119,7 +120,12 @@ const Projects: React.FC = () => {
     loading,
     error,
     refetch,
+    silentRefetch,
   } = useProjects(filters)
+
+  useProjectsListRealtime(() => {
+    void silentRefetch()
+  })
 
   const createForm =
     useProjectForm()
@@ -154,7 +160,9 @@ const Projects: React.FC = () => {
         ])
 
         setDepartments(
-          departmentResult.items.map(
+          departmentResult.items
+            .filter((department) => department.isActive !== false)
+            .map(
             (department) => ({
               id: department.id,
               name: department.name,

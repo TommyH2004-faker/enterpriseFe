@@ -1,4 +1,5 @@
 import axios from "axios"
+import { API_BASE_URL } from 'src/config/env'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
 const ACCESS_TOKEN_EXPIRES_AT_KEY = 'accessTokenExpiresAt'
@@ -208,13 +209,41 @@ export const authStorage = {
   isAuthenticated: (): boolean => {
     return !!authStorage.getAccessToken()
   },
+
+  isSuperAdmin: (): boolean => {
+    return authStorage.getRoles().includes('SUPER_ADMIN')
+  },
+
+  isAdmin: (): boolean => {
+    const roles = authStorage.getRoles()
+    return roles.includes('SUPER_ADMIN') || roles.includes('ADMINS')
+  },
+
+  hasRole: (role: string): boolean => {
+    return authStorage.getRoles().includes(role)
+  },
+
+  hasPermission: (permission: string): boolean => {
+    if (authStorage.isSuperAdmin()) {
+      return true
+    }
+    return authStorage.getPermissions().includes(permission)
+  },
+
+  hasAnyPermission: (permissions: string[]): boolean => {
+    if (authStorage.isSuperAdmin()) {
+      return true
+    }
+    const userPermissions = authStorage.getPermissions()
+    return permissions.some((p) => userPermissions.includes(p))
+  },
   
    refreshAccessToken: async (): Promise<string> => {
     try {
       // Call API endpoint refresh token
       // Backend sẽ set cookie mới + return access token mới
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
+        `${API_BASE_URL}/auth/refresh`,
         {}, // body có thể trống, Backend lấy refresh token từ cookie
         {
           withCredentials: true,
@@ -264,7 +293,7 @@ export const authStorage = {
   logout: async (reason?: string): Promise<void> => {
   try {
     await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/auth/logout`,
+      `${API_BASE_URL}/auth/logout`,
       { reason },
       {
         withCredentials: true,

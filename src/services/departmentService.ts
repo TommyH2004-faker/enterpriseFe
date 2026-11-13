@@ -1,9 +1,12 @@
 import axiosClient from '../api/axiosClient'
 import {
+  AddDepartmentMemberRequest,
   ApiResponse,
   CreateDepartmentRequest,
+  DepartmentMemberResponse,
   DepartmentResponse,
   PaginatedResponse,
+  UpdateDepartmentMemberRoleRequest,
   UpdateDepartmentRequest,
 } from '../types/Department'
 
@@ -106,6 +109,61 @@ class DepartmentService {
    */
   async deactivateDepartment(id: string): Promise<void> {
     await axiosClient.post(`/departments/${id}/deactivate`)
+  }
+
+  /**
+   * Lấy danh sách thành viên của phòng ban
+   */
+  async getMembers(
+    departmentId: string,
+  ): Promise<DepartmentMemberResponse[]> {
+    const response = await axiosClient.get<{
+      isSuccess: boolean
+      statusCode: number
+      data: DepartmentMemberResponse[]
+      message: string
+    }>(`/department/${departmentId}/members`)
+    return response.data.data || []
+  }
+
+  /**
+   * Thêm thành viên vào phòng ban
+   */
+  async addMember(
+    departmentId: string,
+    request: AddDepartmentMemberRequest,
+  ): Promise<DepartmentMemberResponse> {
+    const response = await axiosClient.post<{
+      isSuccess: boolean
+      statusCode: number
+      data: DepartmentMemberResponse
+      message: string
+    }>(`/department/${departmentId}/members`, request)
+    return response.data.data
+  }
+
+  /**
+   * Cập nhật vai trò thành viên phòng ban
+   */
+  async updateMemberRole(
+    departmentId: string,
+    userId: string,
+    request: UpdateDepartmentMemberRoleRequest,
+  ): Promise<void> {
+    await axiosClient.put(
+      `/department/${departmentId}/members/${userId}/role`,
+      request,
+    )
+  }
+
+  /**
+   * Xóa/rút thành viên khỏi phòng ban
+   */
+  async removeMember(
+    departmentId: string,
+    userId: string,
+  ): Promise<void> {
+    await axiosClient.delete(`/department/${departmentId}/members/${userId}`)
   }
 }
 

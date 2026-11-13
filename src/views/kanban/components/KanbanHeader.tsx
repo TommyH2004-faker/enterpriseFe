@@ -9,9 +9,10 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilArrowLeft, cilPlus, cilSearch, cilTask } from '@coreui/icons'
+import { cilArrowLeft, cilPlus, cilSearch } from '@coreui/icons'
 import { ProjectDetail } from 'src/types/ProjectType/project'
 import { KanbanBoardSummary } from 'src/types/KanbanType/kanban'
+import { ProjectViewerDto } from 'src/hooks/useNotificationConnection'
 
 interface KanbanHeaderProps {
   project: ProjectDetail | null
@@ -20,11 +21,19 @@ interface KanbanHeaderProps {
   boardLoading: boolean
   search: string
   priority: string
+  viewers?: ProjectViewerDto[]
   onSelectBoard: (boardId: string) => void
   onOpenCreateBoard: () => void
   onOpenCreateTask: () => void
   onSearchChange: (value: string) => void
   onPriorityChange: (value: string) => void
+}
+
+const getInitials = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'U'
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
 
 export const KanbanHeader: React.FC<KanbanHeaderProps> = ({
@@ -34,6 +43,7 @@ export const KanbanHeader: React.FC<KanbanHeaderProps> = ({
   boardLoading,
   search,
   priority,
+  viewers = [],
   onSelectBoard,
   onOpenCreateBoard,
   onOpenCreateTask,
@@ -53,18 +63,87 @@ export const KanbanHeader: React.FC<KanbanHeaderProps> = ({
           >
             <CIcon icon={cilArrowLeft} className="me-1" /> Chi tiết dự án
           </Link>
-          <div className="d-flex align-items-center gap-2 mb-1">
+          <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span className="badge bg-light text-secondary border px-2 py-1 fw-semibold">
               {project.code}
             </span>
             <h1 className="h3 fw-bold text-dark mb-0">{project.name}</h1>
+            <span
+              className="badge rounded-pill d-inline-flex align-items-center gap-1 px-2 py-1"
+              style={{
+                backgroundColor: '#ecfdf5',
+                color: '#059669',
+                border: '1px solid #a7f3d0',
+                fontSize: '0.75rem',
+              }}
+              title="Mọi thay đổi trên bảng được đồng bộ trực tiếp không cần tải lại trang"
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  backgroundColor: '#10b981',
+                  display: 'inline-block',
+                }}
+              />
+              Realtime
+            </span>
           </div>
           <p className="text-muted mb-0 small">
             Bảng Kanban quy trình quản lý công việc của dự án
           </p>
         </div>
 
-        <div className="d-flex gap-2">
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          {viewers.length > 0 && (
+            <div
+              className="d-flex align-items-center gap-2 bg-white border rounded-pill px-3 py-1 shadow-sm"
+              title={`Đang mở xem bảng này: ${viewers.map((v) => v.fullName).join(', ')}`}
+            >
+              <span className="small text-muted d-none d-sm-inline">Đang xem:</span>
+              <div className="d-flex align-items-center">
+                {viewers.slice(0, 5).map((viewer, index) => (
+                  <div
+                    key={viewer.userId}
+                    title={viewer.fullName}
+                    className="d-flex align-items-center justify-content-center fw-bold text-white position-relative"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      fontSize: '0.72rem',
+                      backgroundColor: ['#2563eb', '#059669', '#7c3aed', '#d97706', '#dc2626'][
+                        index % 5
+                      ],
+                      border: '2px solid #ffffff',
+                      marginLeft: index === 0 ? 0 : -8,
+                    }}
+                  >
+                    {getInitials(viewer.fullName)}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: -1,
+                        right: -1,
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: '#10b981',
+                        border: '1.5px solid #ffffff',
+                      }}
+                    />
+                  </div>
+                ))}
+                {viewers.length > 5 && (
+                  <span className="small text-secondary fw-semibold ms-1">
+                    +{viewers.length - 5}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           <CButton
             color="primary"
             className="d-flex align-items-center shadow-sm px-3 py-2 fw-semibold"
@@ -106,7 +185,10 @@ export const KanbanHeader: React.FC<KanbanHeaderProps> = ({
             </CButton>
           </div>
 
-          <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-end" style={{ maxWidth: 500 }}>
+          <div
+            className="d-flex align-items-center gap-2 flex-grow-1 justify-content-end"
+            style={{ maxWidth: 500 }}
+          >
             {/* Search Input */}
             <div className="input-group" style={{ maxWidth: 280 }}>
               <span className="input-group-text bg-light border-end-0">
@@ -119,19 +201,21 @@ export const KanbanHeader: React.FC<KanbanHeaderProps> = ({
                 onChange={(event) => onSearchChange(event.target.value)}
               />
             </div>
-           {/* Priority Filter */}
-          <CFormSelect
-            className="w-auto bg-light"
-            value={priority}
-            onChange={(event) => onPriorityChange(event.target.value)}
-          >
-            <option value="">Tất cả mức ưu tiên</option>
-            <option value="3">Cao</option>
-            <option value="2">Trung bình</option>
-            <option value="1">Thấp</option>
-          </CFormSelect>
 
-            {boardLoading && <CSpinner size="sm" color="primary" />}
+            {/* Priority Select */}
+            <CFormSelect
+              className="bg-light"
+              style={{ maxWidth: 180 }}
+              value={priority}
+              onChange={(event) => onPriorityChange(event.target.value)}
+            >
+              <option value="">Mọi độ ưu tiên</option>
+              <option value="3">Cao (High)</option>
+              <option value="2">Trung bình (Medium)</option>
+              <option value="1">Thấp (Low)</option>
+            </CFormSelect>
+
+            {boardLoading && <CSpinner size="sm" color="primary" className="ms-2" />}
           </div>
         </CCardBody>
       </CCard>

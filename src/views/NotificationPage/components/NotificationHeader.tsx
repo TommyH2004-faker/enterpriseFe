@@ -50,7 +50,7 @@ export const NotificationHeader: React.FC<NotificationHeaderProps> = ({
       <div className="d-flex align-items-center gap-2 flex-wrap">
         <CTooltip content={soundOn ? 'Tắt âm thanh thông báo' : 'Bật âm thanh thông báo'}>
           <CButton
-            color={soundOn ? 'light' : 'secondary'}
+            color={soundOn ? 'black' : 'secondary'}
             variant={soundOn ? 'outline' : 'ghost'}
             className="d-flex align-items-center gap-1 shadow-sm"
             onClick={onToggleSound}

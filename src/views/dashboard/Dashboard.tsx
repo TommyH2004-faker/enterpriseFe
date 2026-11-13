@@ -10,16 +10,19 @@ import type {
   ActivityLogPageResult,
 } from 'src/types/activityLog'
 import type { SystemNotificationDto } from 'src/types/notifications'
-import type { DashboardSummaryDto } from 'src/types/dashboard'
+import type {
+  DashboardSummaryDto,
+  DashboardWeeklyTrendResponse,
+} from 'src/types/dashboard'
 
 import DashboardError from './components/DashboardError'
 import DashboardHeader from './components/DashboardHeader'
 import DashboardLoading from './components/DashboardLoading'
-import DashboardPendingCard from './components/DashboardPendingCard'
 import DashboardStats from './components/DashboardStats'
 import DashboardSummaryCard from './components/DashboardSummaryCard'
 import TaskPriorityChart from './components/TaskPriorityChart'
 import TaskStatusChart from './components/TaskStatusChart'
+import WeeklyProjectProgressChart from './components/WeeklyProjectProgressChart'
 import RecentActivityList from './components/RecentActivityList'
 import RecentNotifications from './components/RecentNotifications'
 
@@ -31,6 +34,13 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
+  const [fromDate, setFromDate] = useState<string | undefined>(undefined)
+  const [toDate, setToDate] = useState<string | undefined>(undefined)
+
+  const [weeklyTrend, setWeeklyTrend] = useState<DashboardWeeklyTrendResponse | null>(null)
+  const [weeklyLoading, setWeeklyLoading] = useState(true)
+  const [weeklyError, setWeeklyError] = useState<string | null>(null)
+
   const [activities, setActivities] = useState<ActivityLogListItem[]>([])
   const [activitiesLoading, setActivitiesLoading] = useState(true)
   const [activitiesError, setActivitiesError] = useState<string | null>(null)
@@ -40,6 +50,12 @@ const Dashboard: React.FC = () => {
   const [notificationsLoading, setNotificationsLoading] = useState(true)
   const [notificationsError, setNotificationsError] = useState<string | null>(null)
 
+  const handleDateRangeChange = (from?: string, to?: string) => {
+    setFromDate(from)
+    setToDate(to)
+  }
+
+  // Tải dữ liệu tổng quan Dashboard (chỉ tải khi mount hoặc người dùng bấm Thử lại)
   useEffect(() => {
     let ignore = false
 
@@ -70,6 +86,42 @@ const Dashboard: React.FC = () => {
       ignore = true
     }
   }, [reloadKey])
+
+  // Tải dữ liệu tiến độ công việc theo thời gian (chỉ reload riêng biểu đồ khi đổi date)
+  useEffect(() => {
+    let ignore = false
+
+    const loadWeeklyTrend = async () => {
+      setWeeklyLoading(true)
+      setWeeklyError(null)
+
+      try {
+        const trendData = await dashboardService.getWeeklyTrend(
+          fromDate && toDate ? undefined : 4,
+          fromDate,
+          toDate,
+        )
+        if (!ignore) setWeeklyTrend(trendData)
+      } catch (err) {
+        if (ignore) return
+
+        setWeeklyTrend(null)
+        setWeeklyError(
+          getHttpErrorMessage(err, '') ||
+            (err instanceof Error && err.message) ||
+            'Không thể tải dữ liệu tiến độ công việc.',
+        )
+      } finally {
+        if (!ignore) setWeeklyLoading(false)
+      }
+    }
+
+    void loadWeeklyTrend()
+
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey, fromDate, toDate])
 
   useEffect(() => {
     let ignore = false
@@ -166,9 +218,14 @@ const Dashboard: React.FC = () => {
 
           <CRow className="g-4 mb-4">
             <CCol xs={12}>
-              <DashboardPendingCard
-                title="Tiến độ dự án - 4 tuần gần đây"
-                icon={cilChartLine}
+              <WeeklyProjectProgressChart
+                data={weeklyTrend}
+                loading={weeklyLoading}
+                error={weeklyError}
+                fromDate={fromDate}
+                toDate={toDate}
+                onDateRangeChange={handleDateRangeChange}
+                onRetry={handleRetry}
               />
             </CCol>
           </CRow>

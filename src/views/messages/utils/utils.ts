@@ -5,7 +5,9 @@ import {
   MessageReactionType,
 } from 'src/services/chatService'
 
-export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+import { API_ORIGIN } from 'src/config/env'
+
+export const apiBaseUrl = API_ORIGIN
 
 export const getCurrentUserId = () => {
   const token = authStorage.getAccessToken()
@@ -68,6 +70,41 @@ export const formatConversationTime = (value?: string | null) => {
   }
 
   return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`
+}
+
+export const formatLastSeen = (dateStr?: string | null): string => {
+  if (!dateStr) return 'Ngoại tuyến'
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return 'Ngoại tuyến'
+
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  if (diffMs < 0) return 'Vừa mới truy cập'
+
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffHour = Math.floor(diffMin / 60)
+  const diffDay = Math.floor(diffHour / 24)
+
+  if (diffMin < 1) {
+    return 'Vừa mới truy cập'
+  }
+  if (diffMin < 60) {
+    return `Hoạt động ${diffMin} phút trước`
+  }
+  if (diffHour < 24) {
+    return `Hoạt động ${diffHour} giờ trước`
+  }
+  if (diffDay === 1) {
+    const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    return `Hoạt động hôm qua lúc ${timeStr}`
+  }
+  if (diffDay < 7) {
+    return `Hoạt động ${diffDay} ngày trước`
+  }
+
+  const dateFormatted = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`
+  return `Hoạt động ngày ${dateFormatted}`
 }
 
 export const notifyUnreadChanged = () =>

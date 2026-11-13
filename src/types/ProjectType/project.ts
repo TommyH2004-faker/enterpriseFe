@@ -58,7 +58,6 @@ export interface ProjectSummary {
   createdAt?: string
   updatedAt?: string | null
 
-  isActive?: boolean
   allowedActions?: string[]
 }
 

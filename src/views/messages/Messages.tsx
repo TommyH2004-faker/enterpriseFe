@@ -99,6 +99,8 @@ const Messages: React.FC = () => {
         loading={chat.loading}
         query={chat.query}
         scope={chat.scope}
+        isUserOnline={chat.isUserOnline}
+        getUserLastSeen={chat.getUserLastSeen}
         onScopeChange={chat.setScope}
         onQueryChange={chat.setQuery}
         onSelect={handleSelectConversation}
@@ -148,6 +150,8 @@ const Messages: React.FC = () => {
             <ChatHeader
               conversation={active}
               currentUserId={chat.currentUserId}
+              isUserOnline={chat.isUserOnline}
+              getUserLastSeen={chat.getUserLastSeen}
               onOpenInfo={() => {
                 setMembersModalInitialView('info')
                 setShowMembersModal(true)
@@ -217,6 +221,8 @@ const Messages: React.FC = () => {
           conversation={active}
           currentUserId={chat.currentUserId}
           service={chat.service}
+          isUserOnline={chat.isUserOnline}
+          getUserLastSeen={chat.getUserLastSeen}
           onClose={() => setShowMembersModal(false)}
           onRemoveMember={chat.removeMember}
           onAddMembers={chat.addMembers}

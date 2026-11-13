@@ -30,6 +30,12 @@ export interface MessageReaction {
   reactedAt: string
 }
 
+export interface UserPresence {
+  userId: string
+  isOnline: boolean
+  lastSeenAt?: string | null
+}
+
 export interface ConversationListItem {
   id: string
   name: string
@@ -41,6 +47,8 @@ export interface ConversationListItem {
   memberCount: number
   unreadCount: number
   lastMessage?: { id?: string; content?: string | null; sentAt: string; isDeleted: boolean } | null
+  otherUserId?: string | null
+  otherUserLastLoginAt?: string | null
 }
 
 export interface ConversationMember {
@@ -51,6 +59,7 @@ export interface ConversationMember {
   joinedAt?: string
   isMuted?: boolean
   isPinned?: boolean
+  lastLoginAt?: string | null
 }
 
 export type ConversationScope = 'active' | 'archived' | 'dissolved'
@@ -62,6 +71,8 @@ export interface ConversationDetail extends ConversationListItem {
   /** Nhóm đã bị giải tán */
   isArchived?: boolean
   members: ConversationMember[]
+  otherUserId?: string | null
+  otherUserLastLoginAt?: string | null
 }
 export interface MessageAttachment {
   id: string

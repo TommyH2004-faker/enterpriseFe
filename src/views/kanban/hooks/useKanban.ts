@@ -181,13 +181,18 @@ export const useKanban = () => {
     async (
       boardId: string,
       currentProjectId = projectId,
+      options?: { silent?: boolean },
     ) => {
       if (!currentProjectId || !boardId) {
         return
       }
 
+      const silent = options?.silent === true
+
       try {
-        setBoardLoading(true)
+        if (!silent) {
+          setBoardLoading(true)
+        }
         setError('')
 
         const [detail, tasks] =
@@ -224,18 +229,53 @@ export const useKanban = () => {
           err,
         )
 
-        setError(
-          err?.response?.data?.message ||
-            err?.message ||
-            'Không thể tải dữ liệu Kanban của dự án.',
-        )
-
-        setBoard(null)
+        if (!silent) {
+          setError(
+            err?.response?.data?.message ||
+              err?.message ||
+              'Không thể tải dữ liệu Kanban của dự án.',
+          )
+          setBoard(null)
+        }
       } finally {
-        setBoardLoading(false)
+        if (!silent) {
+          setBoardLoading(false)
+        }
       }
     },
     [projectId],
+  )
+
+  /**
+   * Đồng bộ ngầm thông tin dự án + danh sách board + nội dung board hiện tại
+   * khi có sự kiện Realtime từ thành viên khác mà KHÔNG bật spinner gây nháy trang.
+   */
+  const silentSyncProjectBoard = useCallback(
+    async (preferredBoardId?: string | null) => {
+      if (!projectId) return
+      try {
+        const [projectResult, boardsResult] = await Promise.all([
+          projectService.getProjectById(projectId),
+          projectService.getBoards(projectId),
+        ])
+        setProject(projectResult)
+        setBoards(boardsResult)
+
+        const targetBoardId =
+          board?.id && boardsResult.some((b) => b.id === board.id)
+            ? board.id
+            : preferredBoardId && boardsResult.some((b) => b.id === preferredBoardId)
+              ? preferredBoardId
+              : boardsResult[0]?.id
+
+        if (targetBoardId) {
+          await loadBoard(targetBoardId, projectId, { silent: true })
+        }
+      } catch (err) {
+        console.warn('Silent Kanban sync skipped:', err)
+      }
+    },
+    [board?.id, loadBoard, projectId],
   )
 
   // =========================================================
@@ -839,6 +879,7 @@ const deleteTask = async (taskId: string) => {
 
     // Board
     loadBoard,
+    silentSyncProjectBoard,
     onDragEnd,
 
     // Actions

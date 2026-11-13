@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react'
-import { AIChatController } from '../hooks/Useaichat '
+import { AIChatController } from '../hooks/useAIChat'
 import { ChatView } from 'src/types/Aichat'
 import { aiChatConfig } from 'src/api/Aichat.config'
 import ChatHeader from './Chatheader'

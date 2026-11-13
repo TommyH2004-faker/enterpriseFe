@@ -26,7 +26,7 @@ import {
   EmployeeSearchItem,
 } from 'src/services/chatService'
 import { getGroupPermissions, normalizeRole } from '../utils/groupPermissions'
-import { initialOf } from '../utils/utils'
+import { formatLastSeen, initialOf } from '../utils/utils'
 
 export type GroupModalView = 'info' | 'add' | 'kick' | 'dissolve'
 
@@ -36,6 +36,8 @@ interface Props {
   conversation: ConversationDetail
   currentUserId: string
   service: ChatService
+  isUserOnline?: (userId?: string | null) => boolean
+  getUserLastSeen?: (userId?: string | null, fallback?: string | null) => string | null
   onClose: () => void
   onRemoveMember: (userId: string) => Promise<string | null>
   onAddMembers: (userIds: string[]) => Promise<string | null>
@@ -53,6 +55,8 @@ const GroupMembersModal: React.FC<Props> = ({
   conversation,
   currentUserId,
   service,
+  isUserOnline,
+  getUserLastSeen,
   onClose,
   onRemoveMember,
   onAddMembers,
@@ -430,15 +434,36 @@ const GroupMembersModal: React.FC<Props> = ({
                 const memberRole = normalizeRole(member.role)
                 const isBusy = busyUserId === member.userId
 
+                const isOnline = isUserOnline ? isUserOnline(member.userId) : false
+                const lastSeen = getUserLastSeen ? getUserLastSeen(member.userId, member.lastLoginAt) : member.lastLoginAt
+
                 return (
                   <div key={member.userId} className="group-member-row">
                     <div className="member-row-left">
-                      <span className="member-circle-avatar">
+                      <span className="member-circle-avatar" style={{ position: 'relative' }}>
                         {initialOf(member.fullName || 'U')}
+                        {isOnline && (
+                          <span
+                            className="avatar-online-dot"
+                            style={{ width: 10, height: 10, right: -1, bottom: -1 }}
+                            title="Đang hoạt động"
+                          />
+                        )}
                       </span>
                       <span className="member-row-name">
-                        {member.fullName || 'Thành viên'}
+                        <span className="member-name-text">{member.fullName || 'Thành viên'}</span>
                         {isMe && <span className="member-self-tag"> (Bạn)</span>}
+                        <small
+                          className="member-presence-status"
+                          style={{
+                            display: 'block',
+                            fontSize: '11px',
+                            color: isOnline ? '#10b981' : '#9ca3af',
+                            marginTop: '1px',
+                          }}
+                        >
+                          {isOnline ? 'Đang hoạt động' : formatLastSeen(lastSeen)}
+                        </small>
                       </span>
                       {renderRoleBadge(memberRole)}
                     </div>

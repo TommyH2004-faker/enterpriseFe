@@ -10,6 +10,7 @@ interface ConversationAvatarProps {
   avatarUrl?: string | null
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   showBadge?: boolean
+  isOnline?: boolean
   className?: string
 }
 
@@ -19,6 +20,7 @@ const ConversationAvatar: React.FC<ConversationAvatarProps> = ({
   avatarUrl,
   size = 'md',
   showBadge = true,
+  isOnline,
   className = '',
 }) => {
   const isDirect = type === ConversationType.Direct
@@ -39,6 +41,10 @@ const ConversationAvatar: React.FC<ConversationAvatarProps> = ({
         <span className="avatar-group-badge" title="Nhóm">
           <CIcon icon={cilPeople} />
         </span>
+      )}
+
+      {isOnline && (
+        <span className="avatar-online-dot" title="Đang hoạt động" aria-label="Đang hoạt động" />
       )}
     </div>
   )

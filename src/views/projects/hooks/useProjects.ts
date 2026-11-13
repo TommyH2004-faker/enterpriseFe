@@ -1,9 +1,6 @@
 // src/views/projects/hooks/useProjects.ts
 
 import { useCallback, useEffect, useState } from 'react'
-
-
-
 import { projectService } from 'src/services/projectService'
 import { ProjectFilters, ProjectListData } from 'src/types/ProjectType/project'
 
@@ -17,39 +14,41 @@ const EMPTY_DATA: ProjectListData = {
   hasNextPage: false,
 }
 
-export const useProjects = (
-  filters: ProjectFilters,
-) => {
-  const [data, setData] =
-    useState<ProjectListData>(EMPTY_DATA)
+export const useProjects = (filters: ProjectFilters) => {
+  const [data, setData] = useState<ProjectListData>(EMPTY_DATA)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const [loading, setLoading] =
-    useState(false)
+  const fetchProjects = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent === true
+      try {
+        if (!silent) {
+          setLoading(true)
+        }
+        setError(null)
 
-  const [error, setError] =
-    useState<string | null>(null)
+        const result = await projectService.getProjects(filters)
+        setData(result)
+      } catch (err: any) {
+        if (!silent) {
+          setError(err?.response?.data?.message || 'Không thể tải danh sách dự án.')
+        }
+      } finally {
+        if (!silent) {
+          setLoading(false)
+        }
+      }
+    },
+    [filters],
+  )
 
-  const fetchProjects = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const result =
-        await projectService.getProjects(filters)
-
-      setData(result)
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          'Không thể tải danh sách dự án.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [filters])
+  const silentRefetch = useCallback(async () => {
+    await fetchProjects({ silent: true })
+  }, [fetchProjects])
 
   useEffect(() => {
-    fetchProjects()
+    void fetchProjects()
   }, [fetchProjects])
 
   return {
@@ -57,5 +56,6 @@ export const useProjects = (
     loading,
     error,
     refetch: fetchProjects,
+    silentRefetch,
   }
 }

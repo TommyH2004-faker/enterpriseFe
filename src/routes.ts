@@ -58,7 +58,7 @@ export const routes = [
   { path: '/profile', name: 'Hồ sơ', element: ProfilePage },
   {
     path: '/positionuser',
-    name: 'Vai trò người dùng',
+    name: 'Chức vụ',
     element: PositionRoleUser,
   },
   {

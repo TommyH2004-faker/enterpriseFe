@@ -90,10 +90,13 @@ export function useTaskDetail({
     })
   }
 
-  const loadCoreData = useCallback(async () => {
+  const loadCoreData = useCallback(async (options?: { silent?: boolean }) => {
     if (!taskId) return
 
-    setLoading(true)
+    const silent = options?.silent === true
+    if (!silent) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -157,9 +160,13 @@ export function useTaskDetail({
       setAssigneeInitialized(true)
     } catch (err) {
       console.error('Failed to load task detail:', err)
-      setError('Không thể tải đầy đủ dữ liệu chi tiết công việc.')
+      if (!silent) {
+        setError('Không thể tải đầy đủ dữ liệu chi tiết công việc.')
+      }
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }, [projectId, taskId])
 
@@ -544,6 +551,10 @@ export function useTaskDetail({
     await loadCoreData()
   }, [loadCoreData])
 
+  const silentRefresh = useCallback(async () => {
+    await loadCoreData({ silent: true })
+  }, [loadCoreData])
+
   return {
     ...state,
     assigneeInitialized,
@@ -551,6 +562,7 @@ export function useTaskDetail({
     actionLoading,
     error,
     refresh,
+    silentRefresh,
     updateTask,
     updateAssignees,
     updateAssigneeSelection,
