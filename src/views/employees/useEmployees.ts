@@ -7,6 +7,7 @@ import {
   CreateEmployeeRequest,
   CreateEmployeeResponse,
   EmployeeResponse,
+  PendingAccountResponse,
   PositionResponse,
   UpdateEmployeeRequest,
 } from '../../types/Employee'
@@ -52,6 +53,8 @@ export const useEmployees = () => {
   const [departments, setDepartments] = useState<DepartmentResponse[]>([])
   const [positions, setPositions] = useState<PositionResponse[]>([])
   const [employees, setEmployees] = useState<EmployeeResponse[]>([])
+  const [pendingAccounts, setPendingAccounts] = useState<PendingAccountResponse[]>([])
+  const [pendingAccountsLoading, setPendingAccountsLoading] = useState(false)
   const [departmentsLoading, setDepartmentsLoading] = useState(false)
   const [positionsLoading, setPositionsLoading] = useState(false)
   const [positionsError, setPositionsError] = useState('')
@@ -108,13 +111,25 @@ export const useEmployees = () => {
     }
   }, [])
 
+  const loadPendingAccounts = useCallback(async () => {
+    try {
+      setPendingAccountsLoading(true)
+      const data = await employeeService.getPendingAccounts()
+      setPendingAccounts(data)
+    } catch {
+      // Không chặn giao diện nếu không tải được danh sách chờ duyệt
+    } finally {
+      setPendingAccountsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     void loadEmployees()
   }, [loadEmployees])
 
   useEffect(() => {
-    void Promise.all([loadDepartments(), loadPositions()])
-  }, [loadDepartments, loadPositions])
+    void Promise.all([loadDepartments(), loadPositions(), loadPendingAccounts()])
+  }, [loadDepartments, loadPositions, loadPendingAccounts])
 
   const createEmployee = async (
     formData: CreateEmployeeRequest,
@@ -142,11 +157,17 @@ export const useEmployees = () => {
         positionId: formData.positionId,
         joinedDate: formData.joinedDate || null,
       })
-      toast.success(
-        response.message ||
-          'Tạo nhân viên thành công. Tài khoản và mật khẩu sẽ được gửi qua email.',
-      )
-      await loadEmployees()
+      if (response.data?.linkedExistingAccount) {
+        toast.success(
+          'Đã duyệt và liên kết tài khoản có sẵn vào phòng ban & chức vụ thành công!',
+        )
+      } else {
+        toast.success(
+          response.message ||
+            'Tạo nhân viên thành công. Tài khoản và mật khẩu sẽ được gửi qua email.',
+        )
+      }
+      await Promise.all([loadEmployees(), loadPendingAccounts()])
       return response.data
     } catch (error) {
       toast.error(getErrorMessage(error))
@@ -199,8 +220,8 @@ export const useEmployees = () => {
     try {
       setLoading(true)
       const response = await employeeService.deleteEmployee(id)
-      toast.success(response.message || 'Xóa nhân viên thành công')
-      await loadEmployees()
+      toast.success(response.message || 'Đã xóa nhân viên và tài khoản liên kết thành công')
+      await Promise.all([loadEmployees(), loadPendingAccounts()])
       return true
     } catch (error) {
       toast.error(getErrorMessage(error))
@@ -214,6 +235,8 @@ export const useEmployees = () => {
     departments,
     positions,
     employees,
+    pendingAccounts,
+    pendingAccountsLoading,
     departmentsLoading,
     positionsLoading,
     positionsError,
@@ -224,6 +247,7 @@ export const useEmployees = () => {
     positionId,
     includeInactive,
     loadEmployees,
+    loadPendingAccounts,
     setSearch,
     setDepartmentId,
     setPositionId,

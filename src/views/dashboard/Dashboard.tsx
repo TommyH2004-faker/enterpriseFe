@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { CCol, CRow } from '@coreui/react'
+import { CAlert, CCol, CRow } from '@coreui/react'
 import { cilChartLine } from '@coreui/icons'
 import { getHttpErrorMessage } from 'src/api/authApi'
 import { dashboardService } from 'src/services/dashboardService'
 import { activityLogQueryService } from 'src/services/activityLogQueryService'
 import { notificationService } from 'src/services/notificationService'
+import profileService from 'src/services/profileService'
 import type {
   ActivityLogListItem,
   ActivityLogPageResult,
@@ -49,11 +50,29 @@ const Dashboard: React.FC = () => {
   const [notificationsTotal, setNotificationsTotal] = useState(0)
   const [notificationsLoading, setNotificationsLoading] = useState(true)
   const [notificationsError, setNotificationsError] = useState<string | null>(null)
+  const [isPendingOnboarding, setIsPendingOnboarding] = useState(false)
 
   const handleDateRangeChange = (from?: string, to?: string) => {
     setFromDate(from)
     setToDate(to)
   }
+
+  useEffect(() => {
+    let ignore = false
+    profileService
+      .getMyProfile()
+      .then((profile) => {
+        if (!ignore) {
+          setIsPendingOnboarding(profile.employee === null)
+        }
+      })
+      .catch(() => {
+        // Không chặn giao diện nếu không tải được profile
+      })
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
 
   // Tải dữ liệu tổng quan Dashboard (chỉ tải khi mount hoặc người dùng bấm Thử lại)
   useEffect(() => {
@@ -195,6 +214,17 @@ const Dashboard: React.FC = () => {
   return (
     <div className="pb-2">
       <DashboardHeader />
+
+      {isPendingOnboarding && (
+        <CAlert color="warning" className="mb-4 shadow-sm border-warning">
+          <div className="fw-bold mb-1">
+            Tài khoản của bạn đang chờ Bộ phận Nhân sự (HR / Admin) duyệt gán Phòng ban &amp; Chức vụ
+          </div>
+          <div className="small">
+            Bạn đã đăng ký tài khoản thành công. Để có thể tham gia vào các Phòng ban, Dự án và nhận Công việc trên bảng Kanban, vui lòng liên hệ Quản trị viên hoặc Bộ phận Nhân sự vào mục <strong>Quản lý Nhân viên</strong> để duyệt và gán hồ sơ nhân sự cho email của bạn.
+          </div>
+        </CAlert>
+      )}
 
       {loading && <DashboardLoading />}
 

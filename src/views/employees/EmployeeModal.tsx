@@ -16,7 +16,11 @@ import {
   CSpinner,
 } from '@coreui/react'
 import { DepartmentResponse } from '../../types/Department'
-import { UpdateEmployeeRequest, PositionResponse } from '../../types/Employee'
+import {
+  UpdateEmployeeRequest,
+  PendingAccountResponse,
+  PositionResponse,
+} from '../../types/Employee'
 
 interface Props {
   visible: boolean
@@ -27,10 +31,12 @@ interface Props {
   positions: PositionResponse[]
   positionsLoading: boolean
   positionsError: string
+  pendingAccounts?: PendingAccountResponse[]
   formData: UpdateEmployeeRequest
   onClose: () => void
   onSave: () => void
   onChange: (field: keyof UpdateEmployeeRequest, value: string | boolean) => void
+  onSelectPendingAccount?: (account: PendingAccountResponse) => void
 }
 
 const EmployeeModal: React.FC<Props> = ({
@@ -42,10 +48,12 @@ const EmployeeModal: React.FC<Props> = ({
   positions,
   positionsLoading,
   positionsError,
+  pendingAccounts = [],
   formData,
   onClose,
   onSave,
   onChange,
+  onSelectPendingAccount,
 }) => (
   <CModal
     visible={visible}
@@ -54,10 +62,43 @@ const EmployeeModal: React.FC<Props> = ({
     size="lg"
   >
     <CModalHeader>
-      <CModalTitle>{isEditing ? 'Sửa thông tin nhân viên' : 'Tạo nhân viên mới'}</CModalTitle>
+      <CModalTitle>{isEditing ? 'Sửa thông tin nhân viên' : 'Tạo / Duyệt nhân viên vào phòng ban'}</CModalTitle>
     </CModalHeader>
     <CModalBody>
       <CForm>
+        {!isEditing && pendingAccounts.length > 0 && onSelectPendingAccount && (
+          <div className="mb-3 p-3 rounded border bg-light">
+            <CFormLabel className="fw-semibold text-primary mb-1">
+              Chọn nhanh từ tài khoản đã tự đăng ký ({pendingAccounts.length} tài khoản chờ duyệt)
+            </CFormLabel>
+            <CFormSelect
+              value={
+                pendingAccounts.find(
+                  (acc) => acc.email.toLowerCase() === formData.email.trim().toLowerCase(),
+                )?.userId ?? ''
+              }
+              onChange={(event) => {
+                const selected = pendingAccounts.find(
+                  (acc) => acc.userId === event.target.value,
+                )
+                if (selected) {
+                  onSelectPendingAccount(selected)
+                }
+              }}
+            >
+              <option value="">-- Hoặc tự nhập thông tin nhân viên mới bên dưới --</option>
+              {pendingAccounts.map((acc) => (
+                <option key={acc.userId} value={acc.userId}>
+                  {acc.fullName || acc.username} ({acc.email}) —{' '}
+                  {acc.isEmailVerified ? 'Đã xác thực OTP' : 'Chưa xác thực OTP'}
+                </option>
+              ))}
+            </CFormSelect>
+            <div className="small text-muted mt-1">
+              Khi chọn tài khoản có sẵn, hệ thống sẽ giữ nguyên mật khẩu của người dùng và gắn trực tiếp vào phòng ban & chức vụ.
+            </div>
+          </div>
+        )}
         <CRow>
           <CCol md={6} className="mb-3">
             <CFormLabel>

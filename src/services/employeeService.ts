@@ -6,6 +6,7 @@ import {
   EmployeeFilters,
   EmployeeApiResponse,
   EmployeeResponse,
+  PendingAccountResponse,
   PositionResponse,
   UpdateEmployeeRequest,
 } from '../types/Employee'
@@ -16,6 +17,13 @@ class EmployeeService {
       EmployeeApiResponse<EmployeeResponse[]>
     >('/api/v1/employees', { params: filters })
     return response.data.data
+  }
+
+  async getPendingAccounts(): Promise<PendingAccountResponse[]> {
+    const response = await axiosClient.get<
+      EmployeeApiResponse<PendingAccountResponse[]>
+    >('/api/v1/employees/pending-accounts')
+    return response.data.data ?? []
   }
 
   async getPositions(): Promise<PositionResponse[]> {

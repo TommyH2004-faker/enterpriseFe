@@ -49,6 +49,17 @@ export interface CreateEmployeeResponse {
   userId: string
   employeeCode: string
   username: string
+  linkedExistingAccount?: boolean
+}
+
+export interface PendingAccountResponse {
+  userId: string
+  username: string
+  email: string
+  fullName: string
+  isEmailVerified: boolean
+  status: string
+  createdAt: string
 }
 
 export interface EmployeeApiResponse<T> {
